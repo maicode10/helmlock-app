@@ -35,10 +35,10 @@ Example: `{ "message": "You already have an active reservation.", "errors": { "l
 
 **User**
 ```json
-{ "id": 2, "name": "Juan Dela Cruz", "student_id": "2023123456", "email": "student@helmlock.test",
-  "role": "student", "no_show_count": 1, "blocked_until": null, "created_at": "..." }
+{ "id": 2, "name": "Juan Dela Cruz", "student_id": "2023123456", "contact_number": "09171234567",
+  "email": "student@helmlock.test", "role": "student", "no_show_count": 1, "blocked_until": null, "created_at": "..." }
 ```
-`role` is `student` or `admin`. Admins have `student_id: null`.
+`role` is `student` or `admin`. Admins have `student_id: null` and `contact_number: null`.
 
 **Reservation**
 ```json
@@ -83,13 +83,15 @@ In admin lists, add `"user": { "id": 2, "name": "...", "student_id": "..." }`.
 | Method | Path | Send | Answer |
 |---|---|---|---|
 | POST | `/login` | `{ login, password }` (login = email or student ID) | `{ token, user }` |
-| POST | `/register` | `{ name, student_id, email, password, password_confirmation, terms: true }` | `{ token, user }` |
+| POST | `/register` | `{ name, student_id, contact_number, email, password, password_confirmation, terms: true }` | `{ token, user }` |
 | POST | `/logout` | – | `{ ok: true }` (delete the current token) |
 | GET | `/me` | – | `{ user }` |
 | POST | `/forgot-password` | `{ login }` | `{ message }` (always the same message; email a **6-digit code**, valid 60 min) |
 | POST | `/reset-password` | `{ login, code, password, password_confirmation }` | `{ message }` (422 on `code` if wrong/expired) |
 
 > There is no website anymore, so forgot password uses a 6-digit code by email instead of a link.
+
+> `contact_number`: required, 11 digits starting with `09`, must be unique (422 on `contact_number` if invalid or already used). Add a `contact_number` column to the users table (nullable, because admins don't have one).
 
 ## Profile (students and admins)
 | Method | Path | Send | Answer |
@@ -130,7 +132,7 @@ Call `LockerService::expireOverdue()` at the start of `/home`, `/lockers`, `/res
 | POST | `/admin/lockers/{id}/status` | `{ status: "available"\|"out_of_service" }` | `{ message }` |
 | POST | `/admin/lockers/{id}/release` | – | `{ message }` (manual key: end reservation, free locker) |
 | GET | `/admin/reservations?status=&q=` | – | `{ reservations: [Reservation+user] }` (max 100, newest first) |
-| GET | `/admin/students?q=` | – | `{ students: [User + is_blocked, total_reservations, completed, no_shows] }` |
+| GET | `/admin/students?q=` | – | `{ students: [User + is_blocked, total_reservations, completed, no_shows] }` (`q` also searches `contact_number`) |
 | POST | `/admin/students/{id}/unblock` | – | `{ message }` (clear `blocked_until` and `no_show_count`) |
 | GET | `/admin/reports` | – | `{ reports: [{ id, message, status, created_at, locker: "02"\|null, user: { name, student_id } }] }` (open first) |
 | POST | `/admin/reports/{id}/toggle` | – | `{ message }` (open ⇄ resolved) |

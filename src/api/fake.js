@@ -32,15 +32,15 @@ function seed() {
   const day0 = new Date();
   day0.setHours(0, 0, 0, 0);
 
-  db.users = [
-    { id: 1, name: 'HelmLock Admin', student_id: null, email: 'admin@helmlock.test', password: 'password', role: 'admin', no_show_count: 0, blocked_until: null, created_at: iso(now - 40 * 24 * HOUR) },
-    { id: 2, name: 'Juan Dela Cruz', student_id: '2023123456', email: 'student@helmlock.test', password: 'password', role: 'student', no_show_count: 1, blocked_until: null, created_at: iso(now - 20 * 24 * HOUR) },
-    { id: 3, name: 'Ana Reyes', student_id: '2022104455', email: 'ana.reyes@gmail.com', password: 'password', role: 'student', no_show_count: 0, blocked_until: null, created_at: iso(now - 18 * 24 * HOUR) },
-    { id: 4, name: 'Mark Santos', student_id: '2023117720', email: 'mark.santos@gmail.com', password: 'password', role: 'student', no_show_count: 2, blocked_until: null, created_at: iso(now - 15 * 24 * HOUR) },
-    { id: 5, name: 'Liza Cruz', student_id: '2021098813', email: 'liza.cruz@gmail.com', password: 'password', role: 'student', no_show_count: 0, blocked_until: iso(now + 9 * HOUR), created_at: iso(now - 12 * 24 * HOUR) },
-    { id: 6, name: 'Paolo Lim', student_id: '2024130021', email: 'paolo.lim@gmail.com', password: 'password', role: 'student', no_show_count: 0, blocked_until: null, created_at: iso(now - 6 * 24 * HOUR) },
+   db.users = [
+    { id: 1, name: 'HelmLock Admin', student_id: null, contact_number: null, email: 'admin@helmlock.test', password: 'password', role: 'admin', no_show_count: 0, blocked_until: null, created_at: iso(now - 40 * 24 * HOUR) },
+    { id: 2, name: 'Juan Dela Cruz', student_id: '2023123456', contact_number: '09171234567', email: 'student@helmlock.test', password: 'password', role: 'student', no_show_count: 1, blocked_until: null, created_at: iso(now - 20 * 24 * HOUR) },
+    { id: 3, name: 'Ana Reyes', student_id: '2022104455', contact_number: '09181234568', email: 'ana.reyes@gmail.com', password: 'password', role: 'student', no_show_count: 0, blocked_until: null, created_at: iso(now - 18 * 24 * HOUR) },
+    { id: 4, name: 'Mark Santos', student_id: '2023117720', contact_number: '09191234569', email: 'mark.santos@gmail.com', password: 'password', role: 'student', no_show_count: 2, blocked_until: null, created_at: iso(now - 15 * 24 * HOUR) },
+    { id: 5, name: 'Liza Cruz', student_id: '2021098813', contact_number: '09201234570', email: 'liza.cruz@gmail.com', password: 'password', role: 'student', no_show_count: 0, blocked_until: iso(now + 9 * HOUR), created_at: iso(now - 12 * 24 * HOUR) },
+    { id: 6, name: 'Paolo Lim', student_id: '2024130021', contact_number: '09211234571', email: 'paolo.lim@gmail.com', password: 'password', role: 'student', no_show_count: 0, blocked_until: null, created_at: iso(now - 6 * 24 * HOUR) },
   ];
-
+  
   db.lockers = ['01', '02', '03', '04', '05', '06'].map((number, i) => ({
     id: i + 1,
     number,
@@ -244,13 +244,17 @@ export async function login({ login, password }) {
   return { token: 'fake-token-' + user.id, user: publicUser(user) };
 }
 
-export async function register({ name, student_id, email, password, password_confirmation, terms }) {
+export async function register({ name, student_id, contact_number, email, password, password_confirmation, terms }) {
   await wait();
   const errors = {};
   const studentId = (student_id || '').trim();
+  const contact = (contact_number || '').trim();
   const mail = (email || '').trim().toLowerCase();
 
   if (!name?.trim()) errors.name = ['Please enter your full name.'];
+  if (!contact) errors.contact_number = ['Please enter your contact number.'];
+  else if (!/^09\d{9}$/.test(contact)) errors.contact_number = ['Enter a valid number: 11 digits starting with 09.'];
+  else if (db.users.some((u) => u.contact_number === contact)) errors.contact_number = ['This contact number already has an account.'];
   if (!studentId) errors.student_id = ['Please enter your student ID.'];
   else if (!/^[A-Za-z0-9_-]+$/.test(studentId)) errors.student_id = ['Student ID can only have letters, numbers, dashes, and underscores.'];
   else if (db.users.some((u) => u.student_id === studentId)) errors.student_id = ['This student ID already has an account.'];
@@ -261,7 +265,7 @@ export async function register({ name, student_id, email, password, password_con
   if (!terms) errors.terms = ['Please agree to the Terms and Rules to continue.'];
   if (Object.keys(errors).length) throw new ApiError('Please check the form.', errors);
 
-  const user = { id: newId(), name: name.trim(), student_id: studentId, email: mail, password, role: 'student', no_show_count: 0, blocked_until: null, created_at: iso(Date.now()) };
+  const user = { id: newId(), name: name.trim(), student_id: studentId, contact_number: contact, email: mail, password, role: 'student', no_show_count: 0, blocked_until: null, created_at: iso(Date.now()) };
   db.users.push(user);
   currentUserId = user.id;
   return { token: 'fake-token-' + user.id, user: publicUser(user) };

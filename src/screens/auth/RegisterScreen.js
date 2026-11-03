@@ -10,7 +10,15 @@ import { colors, font } from '../../theme';
 
 export default function RegisterScreen({ navigation }) {
   const { signUp } = useAuth();
-  const [form, setForm] = useState({ name: '', student_id: '', email: '', password: '', password_confirmation: '', terms: false });
+  const [form, setForm] = useState({
+    name: '',
+    contact_number: '',
+    student_id: '',
+    email: '',
+    password: '',
+    password_confirmation: '',
+    terms: false,
+  });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
 
@@ -18,6 +26,13 @@ export default function RegisterScreen({ navigation }) {
 
   async function submit() {
     setErrors({});
+
+    // Contact number must be 11 digits and start with 09
+    if (!/^09\d{9}$/.test(form.contact_number)) {
+      setErrors({ contact_number: ['Enter a valid number: 11 digits starting with 09.'] });
+      return;
+    }
+
     setLoading(true);
     try {
       await signUp(form);
@@ -35,6 +50,7 @@ export default function RegisterScreen({ navigation }) {
 
       <View style={styles.form}>
         <TextField label="Full Name" icon="person-outline" placeholder="Ex. Juan Dela Cruz" value={form.name} onChangeText={set('name')} error={errors.name?.[0]} autoCapitalize="words" autoComplete="name" />
+        <TextField label="Contact Number" icon="call-outline" placeholder="Ex. 09123456789" value={form.contact_number} onChangeText={set('contact_number')} error={errors.contact_number?.[0]} keyboardType="phone-pad" maxLength={11} autoComplete="tel" />
         <TextField label="Student ID" icon="card-outline" placeholder="Ex. 2020100110" value={form.student_id} onChangeText={set('student_id')} error={errors.student_id?.[0]} keyboardType="number-pad" />
         <TextField label="Email" icon="mail-outline" placeholder="Ex. juan.dela.cruz@gmail.com" value={form.email} onChangeText={set('email')} error={errors.email?.[0]} keyboardType="email-address" autoComplete="email" />
         <TextField label="Password" icon="lock-closed-outline" placeholder="At least 8 characters" value={form.password} onChangeText={set('password')} error={errors.password?.[0]} secureTextEntry autoComplete="new-password" />
