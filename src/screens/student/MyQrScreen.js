@@ -6,6 +6,7 @@ import ScreenHeader from '../../components/ScreenHeader';
 import Card from '../../components/Card';
 import Button from '../../components/Button';
 import Notice from '../../components/Notice';
+import LateNotice from '../../components/LateNotice';
 import QrCard from '../../components/QrCard';
 import Loading from '../../components/Loading';
 import EmptyState from '../../components/EmptyState';
@@ -14,6 +15,7 @@ import useLoad from '../../hooks/useLoad';
 import api from '../../api';
 import { DEMO_TOOLS, RULES } from '../../config';
 import { formatTime, fromNow } from '../../utils/format';
+import { feesFor, peso } from '../../utils/pricing';
 import { colors, radius } from '../../theme';
 
 export default function MyQrScreen({ navigation }) {
@@ -25,6 +27,7 @@ export default function MyQrScreen({ navigation }) {
   const r = data?.reservation;
   const showing = r?.status === 'reserved' ? 'in' : 'out';
   const qr = data ? data[showing] : null;
+  const due = r ? (showing === 'in' ? RULES.dropOffFee : feesFor(r).due_at_retrieval) : 0;
 
   async function regenerate() {
     setBusy('regen');
@@ -49,7 +52,7 @@ export default function MyQrScreen({ navigation }) {
         setMessage(result.message);
         reload();
       } else {
-        result = kind === 'extend' ? await api.simulateExtend() : await api.simulateScan(kind);
+        result = await api.simulateScan(kind);
         navigation.navigate('ScanResult', { result });
       }
     } catch (e) {
@@ -74,9 +77,16 @@ export default function MyQrScreen({ navigation }) {
 
           <Card style={styles.card}>
             <Text style={styles.kind}>{showing === 'in' ? 'Storage QR' : 'Retrieval QR'}</Text>
-            <Text style={styles.steps}>
-              Insert a ₱{RULES.fee} coin, then scan this at Locker {r.locker.number}.
-            </Text>
+            <Text style={styles.steps}>Insert your coins, then scan this at Locker {r.locker.number}.</Text>
+            <View style={styles.due}>
+              <Text style={styles.dueLabel}>{showing === 'in' ? 'Pay at drop-off' : 'Pay at retrieval'}</Text>
+              <Text style={styles.dueValue}>{peso(due)}</Text>
+              {showing === 'out' ? (
+                <Text style={styles.dueNote}>
+                  {peso(RULES.hourlyFee)} × {feesFor(r).hours} hr{feesFor(r).late_fee ? ` + ${peso(feesFor(r).late_fee)} late fee` : ''}
+                </Text>
+              ) : null}
+            </View>
 
             <View style={styles.qr}>
               <QrCard value={qr?.token} label={showing === 'in' ? 'IN · STORE HELMET' : 'OUT · GET HELMET'} used={!qr?.usable} />
@@ -93,11 +103,7 @@ export default function MyQrScreen({ navigation }) {
             )}
           </Card>
 
-          {r.is_late ? (
-            <Notice kind="danger" style={styles.gap}>
-              Your time is over. At the locker, insert the ₱{RULES.extensionFee} extension fee first, then scan this QR.
-            </Notice>
-          ) : null}
+          <LateNotice reservation={r} style={styles.gap} />
 
           {showing === 'in' ? (
             <Notice kind="info" style={styles.gap}>Your OUT QR will show here after your helmet is stored.</Notice>
@@ -117,11 +123,7 @@ export default function MyQrScreen({ navigation }) {
                 ) : (
                   <>
                     <Button title="Scan OUT QR at the locker" variant="secondary" icon="scan-outline" onPress={() => demo('out')} loading={busy === 'out'} />
-                    {r.is_late ? (
-                      <Button title={`Pay ₱${RULES.extensionFee} extension`} variant="secondary" icon="cash-outline" onPress={() => demo('extend')} loading={busy === 'extend'} />
-                    ) : (
-                      <Button title="Make my time run out" variant="secondary" icon="timer-outline" onPress={() => demo('late')} loading={busy === 'late'} />
-                    )}
+                    {!r.is_late ? <Button title="Make me 45 minutes late" variant="secondary" icon="timer-outline" onPress={() => demo('late')} loading={busy === 'late'} /> : null}
                   </>
                 )}
               </View>
@@ -140,6 +142,10 @@ const styles = StyleSheet.create({
   card: { alignItems: 'center', paddingVertical: 22 },
   kind: { fontSize: 18, fontWeight: '800', color: colors.text },
   steps: { marginTop: 4, fontSize: 14, color: colors.muted, textAlign: 'center' },
+  due: { marginTop: 14, alignItems: 'center', paddingVertical: 10, paddingHorizontal: 20, borderRadius: radius.md, backgroundColor: colors.brandSoft, borderWidth: 1, borderColor: colors.brandBorder },
+  dueLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 0.5, color: colors.brandText, textTransform: 'uppercase' },
+  dueValue: { fontSize: 26, fontWeight: '800', color: colors.text },
+  dueNote: { fontSize: 12, color: colors.muted },
   qr: { marginTop: 18 },
   deadline: { marginTop: 14, fontSize: 13, color: colors.muted, textAlign: 'center' },
   strong: { fontWeight: '700', color: colors.text },

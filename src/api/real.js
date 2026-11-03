@@ -87,7 +87,6 @@ export const createReport = (form) => post('/reports', form);
 
 // Testing only (the backend allows these when HELMLOCK_DEMO=true)
 export const simulateScan = (type) => post(`/dev/scan/${type}`);
-export const simulateExtend = () => post('/dev/extend');
 export const simulateLate = () => post('/dev/late');
 
 // ---------- Admin ----------

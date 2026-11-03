@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Backdrop from '../../components/Backdrop';
 import ScreenHeader from '../../components/ScreenHeader';
 import SearchBar from '../../components/SearchBar';
 import Button from '../../components/Button';
@@ -44,57 +45,61 @@ export default function AdminStudentsScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
-      <FlatList
-        data={loading || error ? [] : list}
-        keyExtractor={(s) => String(s.id)}
-        contentContainerStyle={styles.content}
-        keyboardShouldPersistTaps="handled"
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={colors.brandBright} colors={[colors.brand]} />}
-        ListHeaderComponent={
-          <View style={styles.header}>
-            <ScreenHeader title="Students" subtitle={`Students are paused for ${RULES.blockHours} hours after ${RULES.noShowLimit} missed reservations. You can unblock them early.`} />
-            <SearchBar value={text} onChangeText={setText} placeholder="Name, student ID, or email" />
-            {notice ? <Notice kind="success" style={styles.notice}>{notice}</Notice> : null}
-            {!loading && !error ? <Text style={styles.count}>{plural(list.length, 'student')}</Text> : null}
-          </View>
-        }
-        ListEmptyComponent={loading || error ? <Loading error={error} onRetry={reload} /> : <EmptyState icon="people-outline" title="No students found" text="Try another search." />}
-        ItemSeparatorComponent={() => <View style={styles.sep} />}
-        renderItem={({ item: s }) => (
-          <View style={styles.row}>
-            <View style={styles.top}>
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>{s.name[0]}</Text>
-              </View>
-              <View style={styles.flex}>
-                <Text style={styles.name}>{s.name}</Text>
-                <Text style={styles.small}>
-                  {s.student_id} · {s.email}
-                </Text>
-              </View>
-              {s.is_blocked ? <StatusPill status="blocked" /> : null}
+    <View style={styles.root}>
+      <Backdrop />
+      <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
+        <FlatList
+          data={loading || error ? [] : list}
+          keyExtractor={(s) => String(s.id)}
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={colors.brandBright} colors={[colors.brand]} />}
+          ListHeaderComponent={
+            <View style={styles.header}>
+              <ScreenHeader title="Students" subtitle={`Students are paused for ${RULES.blockHours} hours after ${RULES.noShowLimit} missed reservations. You can unblock them early.`} />
+              <SearchBar value={text} onChangeText={setText} placeholder="Name, student ID, or email" />
+              {notice ? <Notice kind="success" style={styles.notice}>{notice}</Notice> : null}
+              {!loading && !error ? <Text style={styles.count}>{plural(list.length, 'student')}</Text> : null}
             </View>
-            <Text style={styles.stats}>
-              {plural(s.total_reservations, 'reservation')} · {s.completed} completed · {plural(s.no_shows, 'no-show')} · strikes {s.no_show_count}/{RULES.noShowLimit}
-            </Text>
-            {s.is_blocked ? (
-              <View style={styles.blockRow}>
-                <Text style={styles.blocked}>Paused until {formatDateTime(s.blocked_until)}</Text>
-                <Button title="Unblock" variant="secondary" style={styles.unblock} onPress={() => setUnblock(s)} />
+          }
+          ListEmptyComponent={loading || error ? <Loading error={error} onRetry={reload} /> : <EmptyState icon="people-outline" title="No students found" text="Try another search." />}
+          ItemSeparatorComponent={() => <View style={styles.sep} />}
+          renderItem={({ item: s }) => (
+            <View style={styles.row}>
+              <View style={styles.top}>
+                <View style={styles.avatar}>
+                  <Text style={styles.avatarText}>{s.name[0]}</Text>
+                </View>
+                <View style={styles.flex}>
+                  <Text style={styles.name}>{s.name}</Text>
+                  <Text style={styles.small}>
+                    {s.student_id} · {s.email}
+                  </Text>
+                </View>
+                {s.is_blocked ? <StatusPill status="blocked" /> : null}
               </View>
-            ) : null}
-          </View>
-        )}
-      />
+              <Text style={styles.stats}>
+                {plural(s.total_reservations, 'reservation')} · {s.completed} completed · {plural(s.no_shows, 'no-show')} · strikes {s.no_show_count}/{RULES.noShowLimit}
+              </Text>
+              {s.is_blocked ? (
+                <View style={styles.blockRow}>
+                  <Text style={styles.blocked}>Paused until {formatDateTime(s.blocked_until)}</Text>
+                  <Button title="Unblock" variant="secondary" style={styles.unblock} onPress={() => setUnblock(s)} />
+                </View>
+              ) : null}
+            </View>
+          )}
+        />
 
-      <ConfirmDialog visible={!!unblock} title={`Unblock ${unblock?.name}?`} message="They can reserve again right away, and their missed-reservation count goes back to 0." confirmText="Unblock" onConfirm={doUnblock} onCancel={() => setUnblock(null)} loading={busy} />
-    </SafeAreaView>
+        <ConfirmDialog visible={!!unblock} title={`Unblock ${unblock?.name}?`} message="They can reserve again right away, and their missed-reservation count goes back to 0." confirmText="Unblock" onConfirm={doUnblock} onCancel={() => setUnblock(null)} loading={busy} />
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.ink },
+  root: { flex: 1, backgroundColor: colors.ink },
+  safe: { flex: 1 },
   content: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 32 },
   header: { paddingBottom: 12 },
   notice: { marginTop: 12 },

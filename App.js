@@ -8,7 +8,7 @@ import { colors } from './src/theme';
 // Dark navigation colors so screen changes never flash white
 const navTheme = {
   ...DarkTheme,
-  colors: { ...DarkTheme.colors, background: colors.ink, card: colors.surface, border: colors.line, primary: colors.brandBright, text: colors.text },
+  colors: { ...DarkTheme.colors, background: colors.ink, card: colors.surfaceSolid, border: colors.line, primary: colors.brandBright, text: colors.text },
 };
 
 export default function App() {

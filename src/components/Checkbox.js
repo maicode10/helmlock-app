@@ -16,7 +16,7 @@ export default function Checkbox({ checked, onChange, children }) {
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
-  box: { width: 20, height: 20, marginTop: 1, borderRadius: 5, borderWidth: 1.5, borderColor: colors.faint, alignItems: 'center', justifyContent: 'center' },
+  box: { width: 20, height: 20, marginTop: 1, borderRadius: 5, borderWidth: 1.5, borderColor: colors.muted, backgroundColor: 'rgba(0, 0, 0, 0.25)', alignItems: 'center', justifyContent: 'center' },
   checked: { backgroundColor: colors.brand, borderColor: colors.brand },
   label: { flex: 1 },
 });

@@ -34,9 +34,9 @@ export default function RegisterScreen({ navigation }) {
       <Text style={styles.subtitle}>Use your USTP-CDO student ID. One account per student.</Text>
 
       <View style={styles.form}>
-        <TextField label="Full Name" icon="person-outline" placeholder="Enter your full name" value={form.name} onChangeText={set('name')} error={errors.name?.[0]} autoCapitalize="words" autoComplete="name" />
-        <TextField label="Student ID" icon="card-outline" placeholder="Enter your student ID" value={form.student_id} onChangeText={set('student_id')} error={errors.student_id?.[0]} keyboardType="number-pad" />
-        <TextField label="Email" icon="mail-outline" placeholder="Enter your email" value={form.email} onChangeText={set('email')} error={errors.email?.[0]} keyboardType="email-address" autoComplete="email" />
+        <TextField label="Full Name" icon="person-outline" placeholder="Ex. Juan Dela Cruz" value={form.name} onChangeText={set('name')} error={errors.name?.[0]} autoCapitalize="words" autoComplete="name" />
+        <TextField label="Student ID" icon="card-outline" placeholder="Ex. 2020100110" value={form.student_id} onChangeText={set('student_id')} error={errors.student_id?.[0]} keyboardType="number-pad" />
+        <TextField label="Email" icon="mail-outline" placeholder="Ex. juan.dela.cruz@gmail.com" value={form.email} onChangeText={set('email')} error={errors.email?.[0]} keyboardType="email-address" autoComplete="email" />
         <TextField label="Password" icon="lock-closed-outline" placeholder="At least 8 characters" value={form.password} onChangeText={set('password')} error={errors.password?.[0]} secureTextEntry autoComplete="new-password" />
         <TextField label="Confirm Password" icon="lock-closed-outline" placeholder="Type your password again" value={form.password_confirmation} onChangeText={set('password_confirmation')} error={errors.password_confirmation?.[0]} secureTextEntry autoComplete="new-password" />
 
@@ -67,11 +67,11 @@ export default function RegisterScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  title: { ...font.title, marginTop: 16 },
-  subtitle: { ...font.body, marginTop: 4, color: colors.muted },
+  title: { ...font.title, marginTop: 12 },
+  subtitle: { fontSize: 13, lineHeight: 18, marginTop: 4, color: colors.textSoft },
   form: { gap: 16, marginTop: 24 },
-  terms: { fontSize: 14, color: colors.muted, lineHeight: 20 },
+  terms: { fontSize: 14, color: colors.textSoft, lineHeight: 20 },
   link: { fontWeight: '700', color: colors.brandBright },
-  error: { marginTop: 6, fontSize: 12, fontWeight: '500', color: colors.brandText },
-  switch: { marginTop: 24, marginBottom: 8, textAlign: 'center', fontSize: 14, color: colors.muted },
+  error: { marginTop: 6, fontSize: 12, fontWeight: '600', color: colors.error },
+  switch: { marginTop: 20, marginBottom: 8, textAlign: 'center', fontSize: 14, color: colors.textSoft },
 });

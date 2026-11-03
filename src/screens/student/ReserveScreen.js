@@ -16,6 +16,7 @@ import useLoad from '../../hooks/useLoad';
 import api from '../../api';
 import { RULES } from '../../config';
 import { formatDateTime, formatTime, toHHmm } from '../../utils/format';
+import { peso, quote } from '../../utils/pricing';
 import { colors, radius } from '../../theme';
 
 const STARTS = [
@@ -63,6 +64,7 @@ export default function ReserveScreen({ navigation }) {
     return e.getDate() === start.getDate() && toHHmm(e) <= '23:55';
   };
 
+  const price = quote(hours);
   const blocked = user.blocked_until && new Date(user.blocked_until) > new Date();
 
   async function reserve() {
@@ -151,9 +153,22 @@ export default function ReserveScreen({ navigation }) {
         </View>
       )}
 
-      <Text style={styles.fee}>
-        ₱{RULES.fee} to store + ₱{RULES.fee} to retrieve, paid by coin at the locker.
-      </Text>
+      <Card style={styles.price}>
+        <Text style={styles.priceTitle}>Price for {hours} hour{hours > 1 ? 's' : ''}</Text>
+        <View style={styles.priceRow}>
+          <Text style={styles.priceLabel}>At drop-off (IN)</Text>
+          <Text style={styles.priceValue}>{peso(price.dropOff)}</Text>
+        </View>
+        <View style={styles.priceRow}>
+          <Text style={styles.priceLabel}>At retrieval (OUT) · {peso(RULES.hourlyFee)} × {hours} hr</Text>
+          <Text style={styles.priceValue}>{peso(price.retrieval)}</Text>
+        </View>
+        <View style={[styles.priceRow, styles.priceTotal]}>
+          <Text style={styles.totalLabel}>Total</Text>
+          <Text style={styles.totalValue}>{peso(price.total)}</Text>
+        </View>
+        <Text style={styles.priceNote}>Paid in ₱5 coins at the locker. Late? The first {RULES.lateGraceMinutes} minutes are free, then +{peso(RULES.lateFeePerHour)} per hour.</Text>
+      </Card>
 
       {error ? <Notice kind="danger" style={styles.error}>{error}</Notice> : null}
 
@@ -182,7 +197,15 @@ const styles = StyleSheet.create({
   dot: { width: 7, height: 7, borderRadius: 4 },
   lockerText: { fontSize: 12, color: colors.muted },
   check: { position: 'absolute', top: 8, right: 8 },
-  fee: { marginTop: 16, fontSize: 13, color: colors.muted, textAlign: 'center' },
+  price: { marginTop: 18, gap: 8 },
+  priceTitle: { fontSize: 14, fontWeight: '700', color: colors.text, marginBottom: 2 },
+  priceRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 },
+  priceLabel: { flex: 1, fontSize: 13, color: colors.muted },
+  priceValue: { fontSize: 14, fontWeight: '600', color: colors.textSoft },
+  priceTotal: { marginTop: 2, paddingTop: 10, borderTopWidth: 1, borderTopColor: colors.line },
+  totalLabel: { fontSize: 15, fontWeight: '700', color: colors.text },
+  totalValue: { fontSize: 20, fontWeight: '800', color: colors.text },
+  priceNote: { marginTop: 2, fontSize: 12, lineHeight: 17, color: colors.faint },
   error: { marginTop: 14 },
   reserve: { marginTop: 16 },
   bottom: { height: 16 },

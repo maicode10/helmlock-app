@@ -8,7 +8,7 @@ export default function BackButton() {
   const navigation = useNavigation();
   return (
     <Pressable onPress={() => navigation.goBack()} style={styles.btn} hitSlop={8} accessibilityLabel="Go back">
-      <Ionicons name="arrow-back" size={24} color={colors.muted} />
+      <Ionicons name="arrow-back" size={28} color={colors.arrow} />
     </Pressable>
   );
 }

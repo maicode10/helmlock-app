@@ -22,7 +22,7 @@ export default function ConfirmDialog({ visible, title, message, confirmText = '
 
 const styles = StyleSheet.create({
   backdrop: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.65)', alignItems: 'center', justifyContent: 'center', padding: 24 },
-  box: { width: '100%', maxWidth: 380, backgroundColor: colors.surface, borderRadius: radius.xl, borderWidth: 1, borderColor: colors.line, padding: 20 },
+  box: { width: '100%', maxWidth: 380, backgroundColor: colors.surfaceSolid, borderRadius: radius.xl, borderWidth: 1, borderColor: colors.line, padding: 20 },
   title: { fontSize: 18, fontWeight: '700', color: colors.text },
   message: { marginTop: 8, fontSize: 14, lineHeight: 20, color: colors.muted },
   actions: { flexDirection: 'row', gap: 10, marginTop: 20 },

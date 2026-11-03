@@ -1,42 +1,46 @@
-// HelmLock logo. size="large" (stacked) or size="small" (side by side)
-import { StyleSheet, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { colors, radius } from '../theme';
+// HelmLock logo from the Figma design.
+// size="large": full logo (locker + HELMLOCK), size="small": locker icon + name, for headers
+// To use a sharper logo, export it from Figma as PNG (3x) and replace assets/logo.png and assets/logo-mark.png
+import { Image, StyleSheet, Text, View } from 'react-native';
+import { colors } from '../theme';
 
-export default function Logo({ size = 'large' }) {
+const LOGO = require('../../assets/logo.png'); // 792 × 576
+const MARK = require('../../assets/logo-mark.png'); // 456 × 392
+
+export default function Logo({ size = 'large', width = 260, tagline = true }) {
   if (size === 'small') {
     return (
       <View style={styles.row}>
-        <View style={[styles.badge, styles.badgeSmall]}>
-          <Ionicons name="lock-closed" size={20} color={colors.text} />
+        <View style={styles.markBox}>
+          <Image source={MARK} style={styles.mark} resizeMode="contain" accessibilityIgnoresInvertColors />
         </View>
         <Text style={styles.nameSmall}>
-          Helm<Text style={styles.red}>Lock</Text>
+          HELM<Text style={styles.red}>LOCK</Text>
         </Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.stack}>
-      <View style={styles.badge}>
-        <Ionicons name="lock-closed" size={32} color={colors.text} />
-      </View>
-      <Text style={styles.name}>
-        Helm<Text style={styles.red}>Lock</Text>
-      </Text>
-      <Text style={styles.tagline}>Your Helmet's Personal Parking Space.</Text>
+    <View style={styles.stack} accessible accessibilityRole="image" accessibilityLabel="HelmLock">
+      <Image source={LOGO} style={{ width, height: width * (576 / 792) }} resizeMode="contain" />
+      {tagline ? <Text style={styles.tagline}>Your Helmet's Personal Space.</Text> : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   stack: { alignItems: 'center' },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  badge: { width: 64, height: 64, borderRadius: radius.lg, backgroundColor: colors.brand, alignItems: 'center', justifyContent: 'center', shadowColor: colors.brand, shadowOpacity: 0.4, shadowRadius: 16, elevation: 8 },
-  badgeSmall: { width: 38, height: 38, borderRadius: radius.md },
-  name: { marginTop: 12, fontSize: 28, fontWeight: '800', color: colors.text, letterSpacing: -0.5 },
-  nameSmall: { fontSize: 20, fontWeight: '800', color: colors.text },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  markBox: {
+    borderRadius: 14,
+    padding: 4,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.35)',
+  },
+  mark: { width: 40, height: 40 * (392 / 456) },
+  nameSmall: { fontSize: 20, fontWeight: '900', color: colors.text, letterSpacing: 0.5 },
   red: { color: colors.brandBright },
-  tagline: { marginTop: 2, fontSize: 12, color: colors.muted },
+  tagline: { marginTop: 6, fontSize: 13, color: colors.muted },
 });

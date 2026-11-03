@@ -9,15 +9,15 @@ import { colors, radius } from '../../theme';
 
 const STEPS = [
   ['person-add-outline', 'Create an account', 'Sign up with your name, USTP-CDO student ID, and email. One account per student.'],
-  ['calendar-outline', 'Reserve a locker', `Pick a free locker, your drop-off time, and how long you need it. You can reserve up to ${RULES.maxAdvanceMinutes} minutes ahead.`],
+  ['calendar-outline', 'Reserve a locker', `Pick a free locker, your drop-off time, and how many hours you need it. You can reserve up to ${RULES.maxAdvanceMinutes} minutes ahead.`],
   ['qr-code-outline', 'Open your IN QR', 'Go to My QR. Turn your screen brightness up so the scanner reads it easily.'],
-  ['cash-outline', 'Store your helmet', `At your locker, insert ₱${RULES.fee} and scan your IN QR. The door opens. Put your helmet inside and close the door. Do this within ${RULES.arriveWindowMinutes} minutes of your drop-off time.`],
-  ['lock-open-outline', 'Get your helmet back', `After class, open your OUT QR. Insert ₱${RULES.fee} and scan it. Take your helmet and close the door.`],
+  ['cash-outline', 'Store your helmet', `At your locker, insert ₱${RULES.dropOffFee} and scan your IN QR. The door opens. Put your helmet inside and close the door. Do this within ${RULES.arriveWindowMinutes} minutes of your drop-off time.`],
+  ['lock-open-outline', 'Get your helmet back', `After class, open your OUT QR. Insert ₱${RULES.hourlyFee} for every hour you reserved (the app shows the exact amount) and scan it. Take your helmet and close the door.`],
 ];
 
 const FAQS = [
-  ['How much does it cost?', `₱${RULES.fee} to store and ₱${RULES.fee} to retrieve, so ₱${RULES.fee * 2} per use. If you're late, there's an extra ₱${RULES.extensionFee} for each ${RULES.extensionMinutes} minutes.`],
-  ["What if I'm late getting my helmet?", `When you scan your OUT QR after your retrieval time, the locker screen asks for the ₱${RULES.extensionFee} extension fee. Insert it, then scan your OUT QR again. Each extension adds ${RULES.extensionMinutes} minutes.`],
+  ['How much does it cost?', `₱${RULES.dropOffFee} when you store your helmet, then ₱${RULES.hourlyFee} for every hour you reserved when you get it back. For example, 3 hours costs ₱${RULES.dropOffFee} + ₱${3 * RULES.hourlyFee} = ₱${RULES.dropOffFee + 3 * RULES.hourlyFee}.`],
+  ["What if I'm late getting my helmet?", `The first ${RULES.lateGraceMinutes} minutes late are free. After that, ₱${RULES.lateFeePerHour} is added for every late hour. The locker screen and the app show the total to insert before you scan your OUT QR.`],
   ["What if I don't show up?", `If you don't store your helmet within ${RULES.arriveWindowMinutes} minutes of your drop-off time, the reservation expires and counts as missed. After ${RULES.noShowLimit} missed reservations, you can't reserve for ${RULES.blockHours} hours.`],
   ['Can I cancel a reservation?', "Yes, as long as you haven't stored your helmet yet. Open your reservation and tap Cancel. Cancelling doesn't count as missed."],
   ['Can I reserve more than one locker?', 'No. You can have one active reservation at a time, so more students get a locker.'],

@@ -5,6 +5,7 @@ import Logo from '../../components/Logo';
 import Card from '../../components/Card';
 import Button from '../../components/Button';
 import Notice from '../../components/Notice';
+import LateNotice from '../../components/LateNotice';
 import StatusPill from '../../components/StatusPill';
 import Loading from '../../components/Loading';
 import SectionTitle from '../../components/SectionTitle';
@@ -13,6 +14,7 @@ import useLoad from '../../hooks/useLoad';
 import api from '../../api';
 import { RULES } from '../../config';
 import { formatDateTime, formatTime, fromNow } from '../../utils/format';
+import { feesFor, peso } from '../../utils/pricing';
 import { colors, radius } from '../../theme';
 
 function greeting() {
@@ -80,11 +82,11 @@ export default function HomeScreen({ navigation }) {
                   Store your helmet before {formatTime(active.arrive_by)} ({fromNow(active.arrive_by)}).
                 </Notice>
               ) : active.is_late ? (
-                <Notice kind="danger" style={styles.notice}>
-                  Your time is over. Pay the ₱{RULES.extensionFee} extension at the locker to get your helmet.
-                </Notice>
+                <LateNotice reservation={active} style={styles.notice} />
               ) : (
-                <Text style={styles.hint}>Retrieve by {formatTime(active.end_time)} ({fromNow(active.end_time)}).</Text>
+                <Text style={styles.hint}>
+                  Retrieve by {formatTime(active.end_time)} ({fromNow(active.end_time)}). Pay {peso(feesFor(active).due_at_retrieval)} at the locker.
+                </Text>
               )}
 
               <View style={styles.buttons}>
@@ -138,7 +140,7 @@ export default function HomeScreen({ navigation }) {
           {/* How it works */}
           <SectionTitle>How it works</SectionTitle>
           <Card>
-            {['Reserve a locker in the app.', `At the locker, insert ₱${RULES.fee} and scan your IN QR to store your helmet.`, `After class, insert ₱${RULES.fee} and scan your OUT QR to get it back.`].map((step, i) => (
+            {['Reserve a locker in the app and choose how many hours.', `At the locker, insert ₱${RULES.dropOffFee} and scan your IN QR to store your helmet.`, `After class, insert ₱${RULES.hourlyFee} for every hour you reserved and scan your OUT QR to get it back.`].map((step, i) => (
               <View key={step} style={[styles.step, i > 0 && styles.stepGap]}>
                 <Text style={styles.stepNo}>{i + 1}</Text>
                 <Text style={styles.stepText}>{step}</Text>

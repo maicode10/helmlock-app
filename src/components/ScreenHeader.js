@@ -12,7 +12,7 @@ export default function ScreenHeader({ title, subtitle, back = false, right, onR
       <View style={styles.row}>
         {back ? (
           <Pressable onPress={() => navigation.goBack()} style={styles.back} hitSlop={8} accessibilityLabel="Go back">
-            <Ionicons name="arrow-back" size={24} color={colors.muted} />
+            <Ionicons name="arrow-back" size={26} color={colors.arrow} />
           </Pressable>
         ) : null}
         <Text style={styles.title} numberOfLines={1}>
@@ -34,6 +34,6 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 40 },
   back: { width: 40, height: 40, marginLeft: -8, alignItems: 'center', justifyContent: 'center' },
   title: { flex: 1, fontSize: 24, fontWeight: '800', color: colors.text },
-  right: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line },
-  subtitle: { marginTop: 2, fontSize: 14, lineHeight: 20, color: colors.muted },
+  right: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0, 0, 0, 0.35)', borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.15)' },
+  subtitle: { marginTop: 2, fontSize: 14, lineHeight: 20, color: colors.textSoft },
 });

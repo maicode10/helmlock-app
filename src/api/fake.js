@@ -5,6 +5,7 @@
 
 import { ApiError, fail } from './errors';
 import { RULES } from '../config';
+import { feesFor } from '../utils/pricing';
 
 const wait = (ms = 300) => new Promise((resolve) => setTimeout(resolve, ms));
 const MIN = 60 * 1000;
@@ -77,19 +78,16 @@ function seed() {
         status,
         stored_at: status === 'completed' ? iso(start + 5 * MIN) : null,
         retrieved_at: status === 'completed' ? iso(start + length - 10 * MIN) : null,
-        extensions: 0,
         created_at: iso(start - 20 * MIN),
       };
-      if (status === 'completed' && rand() < 0.15) {
-        r.extensions = 1;
-        r.retrieved_at = iso(start + length + 25 * MIN);
-      }
+      // A few students came back late (50 minutes = 1 late hour)
+      if (status === 'completed' && rand() < 0.15) r.retrieved_at = iso(start + length + 50 * MIN);
       db.reservations.push(r);
       addLog('reserved', r, 'Locker reserved', 0, r.created_at);
       if (status === 'completed') {
-        addLog('stored', r, 'Helmet stored', RULES.fee, r.stored_at);
-        if (r.extensions) addLog('extended', r, 'Storage time extended', RULES.extensionFee, iso(start + length + 20 * MIN));
-        addLog('retrieved', r, 'Helmet retrieved', RULES.fee, r.retrieved_at);
+        addLog('stored', r, 'Helmet stored', RULES.dropOffFee, r.stored_at);
+        const f = feesFor(r);
+        addLog('retrieved', r, f.late_fee ? `Helmet retrieved (late ${f.late_hours} hr)` : 'Helmet retrieved', f.due_at_retrieval, r.retrieved_at);
       } else if (status === 'expired') {
         addLog('expired', r, 'No-show: helmet was not stored in time', 0, r.arrive_by);
       } else {
@@ -99,11 +97,11 @@ function seed() {
   }
 
   // Ana's helmet is in Locker 03 right now
-  const ana = { id: newId(), user_id: 3, locker_id: 3, start_time: iso(now - 70 * MIN), end_time: iso(now + 3 * HOUR), arrive_by: iso(now - 55 * MIN), status: 'stored', stored_at: iso(now - 62 * MIN), retrieved_at: null, extensions: 0, created_at: iso(now - 80 * MIN) };
+  const ana = { id: newId(), user_id: 3, locker_id: 3, start_time: iso(now - 70 * MIN), end_time: iso(now + 3 * HOUR), arrive_by: iso(now - 55 * MIN), status: 'stored', stored_at: iso(now - 62 * MIN), retrieved_at: null, created_at: iso(now - 80 * MIN) };
   db.reservations.push(ana);
   db.lockers[2].status = 'occupied';
   addLog('reserved', ana, 'Locker reserved', 0, ana.created_at);
-  addLog('stored', ana, 'Helmet stored', RULES.fee, ana.stored_at);
+  addLog('stored', ana, 'Helmet stored', RULES.dropOffFee, ana.stored_at);
 
   db.reports = [
     { id: newId(), user_id: 4, locker_id: 2, message: 'Inserted a ₱5 coin but the locker did not respond. Had to insert another one.', status: 'open', created_at: iso(now - 5 * HOUR) },
@@ -169,8 +167,8 @@ function shapeReservation(r, withUser = false) {
     status: r.status,
     stored_at: r.stored_at,
     retrieved_at: r.retrieved_at,
-    extensions: r.extensions,
     is_late: isLate(r),
+    fees: feesFor(r),
     created_at: r.created_at,
   };
   if (withUser) {
@@ -378,7 +376,6 @@ export async function createReservation({ locker_id, start_time, end_time }) {
     status: 'reserved',
     stored_at: null,
     retrieved_at: null,
-    extensions: 0,
     created_at: iso(Date.now()),
   };
   db.reservations.push(r);
@@ -465,40 +462,35 @@ export async function simulateScan(type) {
     active.status = 'stored';
     active.stored_at = iso(Date.now());
     locker.status = 'occupied';
-    addLog('stored', active, 'Helmet stored', RULES.fee);
+    addLog('stored', active, 'Helmet stored', RULES.dropOffFee);
     return { ok: true, action: 'store', message: 'Door open. Store your helmet.', lcd: ['Door open', 'Store helmet'], locker: locker.number };
   }
 
   if (active.status !== 'stored') return { ok: false, action: null, message: 'Store your helmet first', lcd: ['Store first', 'Use IN QR'] };
-  if (isLate(active)) return { ok: false, action: null, code: 'extension_required', message: 'Time expired. Insert the extension fee to continue.', lcd: ['Time expired', `Insert P${RULES.extensionFee} coin`], locker: locker.number };
+  if (!shapeQr(qr)?.usable) return { ok: false, action: null, message: 'QR already used or expired', lcd: ['QR used/expired', 'Check app'] };
 
+  // The locker asks for the retrieval fee (hours reserved + any late hours), the student inserts the coins, then the door opens
+  const fees = feesFor(active);
   qr.used_at = iso(Date.now());
   active.status = 'completed';
   active.retrieved_at = iso(Date.now());
   locker.status = 'available';
-  addLog('retrieved', active, 'Helmet retrieved', RULES.fee);
-  return { ok: true, action: 'retrieve', message: 'Door open. Take your helmet.', lcd: ['Door open', 'Take helmet'], locker: locker.number };
+  addLog('retrieved', active, fees.late_fee ? `Helmet retrieved (late ${fees.late_hours} hr)` : 'Helmet retrieved', fees.due_at_retrieval);
+  return { ok: true, action: 'retrieve', paid: fees.due_at_retrieval, late_fee: fees.late_fee, message: `Paid ₱${fees.due_at_retrieval}. Door open. Take your helmet.`, lcd: [`Paid P${fees.due_at_retrieval}`, 'Take helmet'], locker: locker.number };
 }
 
-export async function simulateExtend() {
-  await wait(500);
-  const user = me();
-  const active = activeOf(user.id);
-  if (!active || !isLate(active)) return { ok: false, action: null, message: 'No extension needed', lcd: ['No extension', 'Scan OUT QR'] };
-  active.end_time = iso(Date.now() + RULES.extensionMinutes * MIN);
-  active.extensions += 1;
-  addLog('extended', active, 'Storage time extended', RULES.extensionFee);
-  return { ok: true, action: 'extend', message: 'Time extended. Scan your OUT QR again.', lcd: ['Time extended', 'Scan OUT QR'], locker: lockerOf(active).number };
-}
-
-// TESTING ONLY: jump to "late" so you can try the extension screens without waiting
+// TESTING ONLY: make the student 45 minutes late (past the free 30 minutes) without waiting
 export async function simulateLate() {
   await wait(300);
   const user = me();
   const active = activeOf(user.id);
   if (!active || active.status !== 'stored') return { ok: false, message: 'Store your helmet first.' };
-  active.end_time = iso(Date.now() - MIN);
-  return { ok: true, message: 'Your retrieval time is now over (testing only).' };
+  const length = new Date(active.end_time) - new Date(active.start_time);
+  const end = Date.now() - 45 * MIN;
+  active.end_time = iso(end);
+  active.start_time = iso(end - length);
+  active.stored_at = iso(end - length + 5 * MIN);
+  return { ok: true, message: 'You are now 45 minutes late (testing only). A late fee was added.' };
 }
 
 // ---------------------------------------------------------------------------
@@ -809,14 +801,15 @@ export async function adminExport({ type, from, to }) {
   let rows;
 
   if (type === 'daily') {
-    headers = ['Date', 'Reservations made', 'Helmets stored', 'Helmets retrieved', 'Extensions', 'No-shows', 'Cancelled', 'Money collected (PHP)'];
+    headers = ['Date', 'Reservations made', 'Helmets stored', 'Helmets retrieved', 'Late returns', 'No-shows', 'Cancelled', 'Money collected (PHP)'];
     rows = [];
     const totals = [0, 0, 0, 0, 0, 0, 0];
     for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
       const key = ymd(d);
       const dayLogs = logs.filter((g) => ymd(new Date(g.created_at)) === key);
       const c = (a) => dayLogs.filter((g) => g.action === a).length;
-      const values = [c('reserved'), c('stored'), c('retrieved'), c('extended'), c('expired'), c('cancelled'), dayLogs.reduce((s, g) => s + g.amount, 0)];
+      const late = dayLogs.filter((g) => g.action === 'retrieved' && /late/.test(g.details || '')).length;
+      const values = [c('reserved'), c('stored'), c('retrieved'), late, c('expired'), c('cancelled'), dayLogs.reduce((s, g) => s + g.amount, 0)];
       values.forEach((v, i) => (totals[i] += v));
       rows.push([key, ...values]);
     }
@@ -824,7 +817,7 @@ export async function adminExport({ type, from, to }) {
   } else if (type === 'hours') {
     headers = ['Hour', 'Helmets stored', 'Helmets retrieved', 'Total uses', 'Money collected (PHP)'];
     rows = Array.from({ length: 24 }, (_, h) => {
-      const hl = logs.filter((g) => new Date(g.created_at).getHours() === h && ['stored', 'retrieved', 'extended'].includes(g.action));
+      const hl = logs.filter((g) => new Date(g.created_at).getHours() === h && ['stored', 'retrieved'].includes(g.action));
       const st = hl.filter((g) => g.action === 'stored').length;
       const rt = hl.filter((g) => g.action === 'retrieved').length;
       const label = `${h % 12 || 12}:00 ${h >= 12 ? 'PM' : 'AM'} - ${h % 12 || 12}:59 ${h >= 12 ? 'PM' : 'AM'}`;
@@ -837,13 +830,15 @@ export async function adminExport({ type, from, to }) {
       return [ymd(new Date(g.created_at)), hm(g.created_at), x.action.replace(/_/g, ' '), x.locker || '', x.user || '', x.admin || '', x.details || '', g.amount];
     });
   } else if (type === 'reservations') {
-    headers = ['Reservation ID', 'Student', 'Student ID', 'Locker', 'Date', 'Drop-off', 'Retrieve by', 'Stored at', 'Retrieved at', 'Extensions', 'Status'];
+    headers = ['Reservation ID', 'Student', 'Student ID', 'Locker', 'Date', 'Drop-off', 'Retrieve by', 'Stored at', 'Retrieved at', 'Hours', 'Late fee (PHP)', 'Total paid (PHP)', 'Status'];
     rows = db.reservations
       .filter((r) => inRange(r.start_time))
       .sort((a, b) => new Date(a.start_time) - new Date(b.start_time))
       .map((r) => {
         const u = userById(r.user_id);
-        return [r.id, u?.name || 'Deleted account', u?.student_id || '', lockerOf(r)?.number || '', ymd(new Date(r.start_time)), hm(r.start_time), hm(r.end_time), hm(r.stored_at), hm(r.retrieved_at), r.extensions, r.status];
+        const f = feesFor(r);
+        const paid = r.status === 'completed' ? f.total : r.status === 'stored' ? f.drop_off : 0;
+        return [r.id, u?.name || 'Deleted account', u?.student_id || '', lockerOf(r)?.number || '', ymd(new Date(r.start_time)), hm(r.start_time), hm(r.end_time), hm(r.stored_at), hm(r.retrieved_at), f.hours, r.status === 'completed' ? f.late_fee : 0, paid, r.status];
       });
   } else if (type === 'students') {
     headers = ['Name', 'Student ID', 'Email', 'Registered', 'Total reservations', 'Completed', 'No-shows', 'Current strikes', 'Blocked until'];

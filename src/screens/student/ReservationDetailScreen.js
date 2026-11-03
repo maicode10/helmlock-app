@@ -8,6 +8,7 @@ import Card from '../../components/Card';
 import InfoRow from '../../components/InfoRow';
 import Button from '../../components/Button';
 import Notice from '../../components/Notice';
+import LateNotice from '../../components/LateNotice';
 import StatusPill from '../../components/StatusPill';
 import Loading from '../../components/Loading';
 import ConfirmDialog from '../../components/ConfirmDialog';
@@ -15,6 +16,7 @@ import useLoad from '../../hooks/useLoad';
 import api from '../../api';
 import { RULES } from '../../config';
 import { formatDate, formatTime } from '../../utils/format';
+import { feesFor, peso } from '../../utils/pricing';
 import { colors } from '../../theme';
 
 export default function ReservationDetailScreen({ navigation, route }) {
@@ -25,6 +27,7 @@ export default function ReservationDetailScreen({ navigation, route }) {
 
   const { data, loading, error, reload } = useLoad(() => api.getReservation(id), [id]);
   const r = data?.reservation;
+  const f = r ? feesFor(r) : null;
 
   async function cancel() {
     setBusy(true);
@@ -80,11 +83,23 @@ export default function ReservationDetailScreen({ navigation, route }) {
               <InfoRow label="Drop-off" value={formatTime(r.start_time)} />
               <InfoRow label="Retrieve by" value={formatTime(r.end_time)} last={r.status !== 'reserved' && !r.stored_at} />
               {r.status === 'reserved' ? <InfoRow label="Store before" value={formatTime(r.arrive_by)} last /> : null}
-              {r.stored_at ? <InfoRow label="Stored at" value={formatTime(r.stored_at)} last={!r.retrieved_at && !r.extensions} /> : null}
-              {r.retrieved_at ? <InfoRow label="Retrieved at" value={formatTime(r.retrieved_at)} last={!r.extensions} /> : null}
-              {r.extensions ? <InfoRow label="Extensions" value={`${r.extensions} (₱${r.extensions * RULES.extensionFee})`} last /> : null}
+              {r.stored_at ? <InfoRow label="Stored at" value={formatTime(r.stored_at)} last={!r.retrieved_at} /> : null}
+              {r.retrieved_at ? <InfoRow label="Retrieved at" value={formatTime(r.retrieved_at)} last /> : null}
             </View>
           </Card>
+
+          {['reserved', 'stored', 'completed'].includes(r.status) ? (
+            <Card style={styles.feeCard}>
+              <Text style={styles.feeTitle}>{r.status === 'completed' ? 'You paid' : 'Price'}</Text>
+              <InfoRow label="Drop-off (IN)" value={peso(f.drop_off)} />
+              <InfoRow label={`Retrieval (OUT) · ${f.hours} hr`} value={peso(f.retrieval)} last={!f.late_fee} />
+              {f.late_fee ? <InfoRow label={`Late fee · ${f.late_hours} hr`} value={peso(f.late_fee)} last /> : null}
+              <View style={styles.feeTotal}>
+                <Text style={styles.feeTotalLabel}>Total</Text>
+                <Text style={styles.feeTotalValue}>{peso(f.total)}</Text>
+              </View>
+            </Card>
+          ) : null}
 
           {r.status === 'reserved' ? (
             <>
@@ -96,14 +111,16 @@ export default function ReservationDetailScreen({ navigation, route }) {
             </>
           ) : r.status === 'stored' ? (
             <>
-              {r.is_late ? <Notice kind="danger" style={styles.gap}>Your time is over. Pay the ₱{RULES.extensionFee} extension at the locker first.</Notice> : null}
+              <LateNotice reservation={r} style={styles.gap} />
               <Button title="Show my OUT QR" icon="qr-code-outline" onPress={goQr} style={styles.gap} />
             </>
           ) : (
             <Button title="Back to Home" variant="secondary" onPress={() => navigation.popTo('StudentTabs', { screen: 'Home' })} style={styles.gap} />
           )}
 
-          <Text style={styles.fee}>₱{RULES.fee} to store + ₱{RULES.fee} to retrieve, paid by coin at the locker.</Text>
+          <Text style={styles.fee}>
+            Paid in ₱5 coins at the locker. Late? The first {RULES.lateGraceMinutes} minutes are free, then +{peso(RULES.lateFeePerHour)} per hour.
+          </Text>
         </>
       )}
 
@@ -123,5 +140,10 @@ const styles = StyleSheet.create({
   locker: { fontSize: 34, fontWeight: '800', color: colors.text },
   rows: { marginTop: 12 },
   gap: { marginTop: 14 },
-  fee: { marginTop: 18, fontSize: 12, color: colors.faint, textAlign: 'center' },
+  feeCard: { marginTop: 14, paddingVertical: 14 },
+  feeTitle: { fontSize: 14, fontWeight: '700', color: colors.text, marginBottom: 4 },
+  feeTotal: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 8, paddingTop: 10, borderTopWidth: 1, borderTopColor: colors.line },
+  feeTotalLabel: { fontSize: 15, fontWeight: '700', color: colors.text },
+  feeTotalValue: { fontSize: 20, fontWeight: '800', color: colors.text },
+  fee: { marginTop: 18, lineHeight: 18, fontSize: 12, color: colors.faint, textAlign: 'center' },
 });

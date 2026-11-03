@@ -17,8 +17,8 @@ const SECTIONS = [
     `The longest storage time is ${RULES.maxStorageHours} hours.`,
   ]],
   ['3. Fees and coins', [
-    `Storing (IN) costs ₱${RULES.fee} and retrieving (OUT) costs ₱${RULES.fee}, paid by coin at the locker.`,
-    `If you retrieve late, an extension fee of ₱${RULES.extensionFee} applies for each extra ${RULES.extensionMinutes} minutes.`,
+    `Storing (IN) costs ₱${RULES.dropOffFee}. Retrieving (OUT) costs ₱${RULES.hourlyFee} for every hour reserved. Both are paid by coin at the locker.`,
+    `If you retrieve late, the first ${RULES.lateGraceMinutes} minutes are free. After that, a late fee of ₱${RULES.lateFeePerHour} applies for every late hour.`,
     'If a QR scan fails after you insert a coin, your coin credit stays active for a short time so you can scan again.',
     'Coins are not refunded automatically. If the locker fails after you paid, send a Report a Problem and the HelmLock team will check it.',
   ]],

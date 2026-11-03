@@ -7,7 +7,7 @@ export function tabOptions(icons) {
     headerShown: false,
     tabBarActiveTintColor: colors.text,
     tabBarInactiveTintColor: colors.faint,
-    tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.line },
+    tabBarStyle: { backgroundColor: colors.surfaceSolid, borderTopColor: 'rgba(255, 255, 255, 0.08)' },
     tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
     tabBarIcon: ({ color, size, focused }) => (
       <Ionicons name={focused ? icons[route.name] : icons[route.name] + '-outline'} size={size} color={focused ? colors.brandBright : color} />

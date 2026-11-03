@@ -45,10 +45,23 @@ Example: `{ "message": "You already have an active reservation.", "errors": { "l
 { "id": 15, "locker": { "id": 2, "number": "02", "location": "USTP CDO Campus" },
   "start_time": "...", "end_time": "...", "arrive_by": "...",
   "status": "reserved", "stored_at": null, "retrieved_at": null,
-  "extensions": 0, "is_late": false, "created_at": "..." }
+  "is_late": false, "created_at": "...",
+  "fees": { "hours": 3, "late_hours": 0, "drop_off": 5, "retrieval": 15, "late_fee": 0,
+            "due_at_retrieval": 15, "total": 20 } }
 ```
 `status`: `reserved` | `stored` | `completed` | `expired` | `cancelled`.
 `is_late` = status is `stored` and now is past `end_time`.
+
+**Pricing (the `fees` object).** Compute it the same way as `src/utils/pricing.js`:
+- `hours` = reserved hours, rounded up: `ceil((end_time - start_time) / 60 min)`, at least 1.
+- `drop_off` = ₱5 (paid at the locker when the helmet is stored).
+- `retrieval` = `hours × ₱5` (paid at the locker when the helmet is taken out).
+- `late_hours` = 0 if the helmet is taken out at most 30 minutes after `end_time`; otherwise `ceil(minutes late / 60)`.
+  Count late time up to now while `stored`, and up to `retrieved_at` once `completed`. Always 0 for other statuses.
+- `late_fee` = `late_hours × ₱5`. `due_at_retrieval` = `retrieval + late_fee`. `total` = `drop_off + due_at_retrieval`.
+- Put these numbers in `config/helmlock.php`: `drop_off_fee 5`, `hourly_fee 5`, `late_fee_per_hour 5`, `late_grace_minutes 30`.
+  The ESP32 must ask for `due_at_retrieval` in coins before it opens the door on an OUT scan.
+
 In admin lists, add `"user": { "id": 2, "name": "...", "student_id": "..." }`.
 
 **QR**
@@ -61,7 +74,7 @@ In admin lists, add `"user": { "id": 2, "name": "...", "student_id": "..." }`.
 { "ok": true, "action": "store", "message": "Door open. Store your helmet.",
   "lcd": ["Door open", "Store helmet"], "locker": "02" }
 ```
-`action`: `store` | `retrieve` | `extend` | `null`. When late: `"ok": false, "code": "extension_required"`.
+`action`: `store` | `retrieve` | `null`. A `retrieve` result also has `"paid": 20, "late_fee": 5` (pesos paid at retrieval and how much of it was the late fee).
 
 ---
 
@@ -104,8 +117,7 @@ Call `LockerService::expireOverdue()` at the start of `/home`, `/lockers`, `/res
 | Method | Path | Answer |
 |---|---|---|
 | POST | `/dev/scan/{in\|out}` | Scan result (use `LockerService::scan()` with the student's active QR token) |
-| POST | `/dev/extend` | Scan result (use `LockerService::extend()`) |
-| POST | `/dev/late` | `{ ok, message }` (set the active stored reservation's `end_time` to 1 minute ago) |
+| POST | `/dev/late` | `{ ok, message }` (move the active stored reservation back so `end_time` is 45 minutes ago, keeping its length) |
 
 ## Admin (role must be `admin`, otherwise 403)
 | Method | Path | Send | Answer |

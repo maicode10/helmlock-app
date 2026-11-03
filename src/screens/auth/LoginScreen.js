@@ -32,12 +32,12 @@ export default function LoginScreen({ navigation, route }) {
   return (
     <Screen>
       <BackButton />
-      <Text style={styles.title}>Welcome back</Text>
+      <Text style={styles.title}>Welcome Back</Text>
       <Text style={styles.subtitle}>Log in to reserve a locker for your helmet.</Text>
 
       <View style={styles.form}>
         <Flash message={notice} />
-        <TextField label="Email or Student ID" icon="mail-outline" placeholder="Email / Student ID" value={login} onChangeText={setLogin} error={errors.login?.[0]} autoComplete="username" />
+        <TextField label="Email or Student ID" icon="mail-outline" placeholder="Ex. 2020100110" value={login} onChangeText={setLogin} error={errors.login?.[0]} autoComplete="username" />
         <TextField label="Password" icon="lock-closed-outline" placeholder="Enter your password" value={password} onChangeText={setPassword} error={errors.password?.[0]} secureTextEntry autoComplete="password" onSubmitEditing={submit} />
 
         <Text style={styles.forgot} onPress={() => navigation.navigate('ForgotPassword')}>
@@ -66,13 +66,13 @@ export default function LoginScreen({ navigation, route }) {
 }
 
 const styles = StyleSheet.create({
-  title: { ...font.title, marginTop: 24 },
-  subtitle: { ...font.body, marginTop: 4, color: colors.muted },
+  title: { ...font.title, marginTop: 12 },
+  subtitle: { fontSize: 13, lineHeight: 18, marginTop: 4, color: colors.textSoft },
   form: { gap: 16, marginTop: 24 },
   forgot: { alignSelf: 'flex-end', marginTop: -4, fontSize: 13, fontWeight: '600', color: colors.brandBright },
-  switch: { marginTop: 24, textAlign: 'center', fontSize: 14, color: colors.muted },
+  switch: { marginTop: 20, textAlign: 'center', fontSize: 14, color: colors.textSoft },
   link: { fontWeight: '700', color: colors.brandBright },
-  demo: { marginTop: 24, padding: 12, borderRadius: radius.md, borderWidth: 1, borderStyle: 'dashed', borderColor: colors.line },
+  demo: { marginTop: 24, padding: 12, borderRadius: radius.md, borderWidth: 1, borderStyle: 'dashed', borderColor: 'rgba(255, 255, 255, 0.2)' },
   demoTitle: { fontSize: 12, fontWeight: '700', color: colors.muted, marginBottom: 4 },
   demoText: { fontSize: 12, color: colors.faint },
 });
