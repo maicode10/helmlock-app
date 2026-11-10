@@ -60,7 +60,7 @@ export default function AdminLockersScreen({ navigation }) {
                   <>
                     <Text style={styles.who}>{l.current.user.name}</Text>
                     <Text style={styles.small}>
-                      {l.current.user.student_id} · {formatTime(l.current.start_time)} – {formatTime(l.current.end_time)}
+                      {l.current.user.mobile || l.current.user.email} · {formatTime(l.current.start_time)} – {formatTime(l.current.end_time)}
                     </Text>
                     {l.current.is_late ? <Text style={styles.late}>Late: past retrieval time</Text> : null}
                   </>

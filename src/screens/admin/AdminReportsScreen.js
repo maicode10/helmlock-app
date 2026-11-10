@@ -50,7 +50,7 @@ export default function AdminReportsScreen() {
               </View>
               <Text style={styles.message}>{r.message}</Text>
               <Text style={styles.small}>
-                {r.user ? `${r.user.name} (${r.user.student_id})` : 'Unknown'} · {formatDateTime(r.created_at)}
+                {r.user ? `${r.user.name} (${r.user.email})` : 'Unknown'} · {formatDateTime(r.created_at)}
               </Text>
               <Button title={r.status === 'open' ? 'Mark as resolved' : 'Open again'} variant="secondary" onPress={() => toggle(r.id)} loading={busy === r.id} style={styles.button} />
             </Card>

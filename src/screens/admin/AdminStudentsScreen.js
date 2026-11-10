@@ -57,7 +57,7 @@ export default function AdminStudentsScreen() {
           ListHeaderComponent={
             <View style={styles.header}>
               <ScreenHeader title="Students" subtitle={`Students are paused for ${RULES.blockHours} hours after ${RULES.noShowLimit} missed reservations. You can unblock them early.`} />
-              <SearchBar value={text} onChangeText={setText} placeholder="Name, student ID, or email" />
+              <SearchBar value={text} onChangeText={setText} placeholder="Name, email, or mobile number" />
               {notice ? <Notice kind="success" style={styles.notice}>{notice}</Notice> : null}
               {!loading && !error ? <Text style={styles.count}>{plural(list.length, 'student')}</Text> : null}
             </View>
@@ -73,7 +73,7 @@ export default function AdminStudentsScreen() {
                 <View style={styles.flex}>
                   <Text style={styles.name}>{s.name}</Text>
                   <Text style={styles.small}>
-                    {s.student_id} · {s.email}
+                    {s.email}{s.mobile ? ` · ${s.mobile}` : ''}
                   </Text>
                 </View>
                 {s.is_blocked ? <StatusPill status="blocked" /> : null}

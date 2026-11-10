@@ -6,12 +6,11 @@ import TextField from '../../components/TextField';
 import Button from '../../components/Button';
 import Flash from '../../components/Flash';
 import { useAuth } from '../../context/AuthContext';
-import { USE_FAKE_API } from '../../config';
-import { colors, font, radius } from '../../theme';
+import { colors, font } from '../../theme';
 
 export default function LoginScreen({ navigation, route }) {
   const { signIn } = useAuth();
-  const [login, setLogin] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
@@ -21,10 +20,10 @@ export default function LoginScreen({ navigation, route }) {
     setErrors({});
     setLoading(true);
     try {
-      await signIn(login, password);
+      await signIn(email, password);
       // No navigate needed: the app switches to the logged-in screens by itself
     } catch (e) {
-      setErrors(e.errors && Object.keys(e.errors).length ? e.errors : { login: [e.message] });
+      setErrors(e.errors && Object.keys(e.errors).length ? e.errors : { email: [e.message] });
       setLoading(false);
     }
   }
@@ -37,7 +36,7 @@ export default function LoginScreen({ navigation, route }) {
 
       <View style={styles.form}>
         <Flash message={notice} />
-        <TextField label="Email or Student ID" icon="mail-outline" placeholder="Ex. 2020100110" value={login} onChangeText={setLogin} error={errors.login?.[0]} autoComplete="username" />
+        <TextField label="Email" icon="mail-outline" placeholder="Ex. juan.dela.cruz@gmail.com" value={email} onChangeText={setEmail} error={errors.email?.[0]} keyboardType="email-address" autoComplete="email" />
         <TextField label="Password" icon="lock-closed-outline" placeholder="Enter your password" value={password} onChangeText={setPassword} error={errors.password?.[0]} secureTextEntry autoComplete="password" onSubmitEditing={submit} />
 
         <Text style={styles.forgot} onPress={() => navigation.navigate('ForgotPassword')}>
@@ -53,14 +52,6 @@ export default function LoginScreen({ navigation, route }) {
           Sign Up
         </Text>
       </Text>
-
-      {USE_FAKE_API ? (
-        <View style={styles.demo}>
-          <Text style={styles.demoTitle}>Demo accounts (fake backend)</Text>
-          <Text style={styles.demoText}>Student: 2023123456 / password</Text>
-          <Text style={styles.demoText}>Admin: admin@helmlock.test / password</Text>
-        </View>
-      ) : null}
     </Screen>
   );
 }
@@ -72,7 +63,4 @@ const styles = StyleSheet.create({
   forgot: { alignSelf: 'flex-end', marginTop: -4, fontSize: 13, fontWeight: '600', color: colors.brandBright },
   switch: { marginTop: 20, textAlign: 'center', fontSize: 14, color: colors.textSoft },
   link: { fontWeight: '700', color: colors.brandBright },
-  demo: { marginTop: 24, padding: 12, borderRadius: radius.md, borderWidth: 1, borderStyle: 'dashed', borderColor: 'rgba(255, 255, 255, 0.2)' },
-  demoTitle: { fontSize: 12, fontWeight: '700', color: colors.muted, marginBottom: 4 },
-  demoText: { fontSize: 12, color: colors.faint },
 });

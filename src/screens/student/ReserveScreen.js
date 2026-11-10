@@ -1,5 +1,5 @@
 // Fig. 3: pick a drop-off time, how long, and a locker
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Screen from '../../components/Screen';
@@ -31,6 +31,17 @@ const LENGTHS = [1, 2, 3, 4, 6, 8, 12].filter((h) => h <= RULES.maxStorageHours)
 
 const STATUS_TEXT = { available: 'Free', reserved: 'Reserved', occupied: 'Occupied' };
 
+// Opening hours: 7:00 AM to 9:00 PM
+const OPEN = RULES.openHour * 60; // in minutes after midnight
+const CLOSE = RULES.closeHour * 60;
+const hourLabel = (h) => `${h % 12 || 12}:00 ${h >= 12 ? 'PM' : 'AM'}`;
+const OPEN_TEXT = `${hourLabel(RULES.openHour)} to ${hourLabel(RULES.closeHour)}`;
+const minutesOf = (d) => d.getHours() * 60 + d.getMinutes();
+const isToday = (d) => d.toDateString() === new Date().toDateString();
+
+// A drop-off time is allowed if it's today, after opening, and leaves at least 1 hour before closing
+const startOk = (d) => isToday(d) && minutesOf(d) >= OPEN && minutesOf(d) + 60 <= CLOSE;
+
 // Drop-off time for a chip: now, or now + X minutes rounded to the next 5 minutes
 function startFor(minutes) {
   const d = new Date();
@@ -55,14 +66,33 @@ export default function ReserveScreen({ navigation }) {
     return { active: home.active_reservation, lockers: lockers.lockers };
   });
 
-  const start = useMemo(() => startFor(STARTS[startIndex].minutes), [startIndex, data]);
+  const startTimes = useMemo(() => STARTS.map((s) => startFor(s.minutes)), [data]);
+  const start = startTimes[startIndex];
   const end = useMemo(() => new Date(start.getTime() + hours * 3600000), [start, hours]);
 
-  // Retrieval must stay within the same day
+  // Retrieval must be by closing time (9:00 PM)
   const fitsToday = (h) => {
     const e = new Date(start.getTime() + h * 3600000);
-    return e.getDate() === start.getDate() && toHHmm(e) <= '23:55';
+    return e.toDateString() === start.toDateString() && minutesOf(e) <= CLOSE;
   };
+
+  // If the chosen drop-off time is outside opening hours, switch to the first one that's allowed
+  useEffect(() => {
+    if (!startOk(start)) {
+      const first = startTimes.findIndex(startOk);
+      if (first >= 0) setStartIndex(first);
+    }
+  }, [startTimes]);
+
+  // Late in the day, longer lengths no longer fit. Switch to the longest one that still does.
+  useEffect(() => {
+    if (!fitsToday(hours)) {
+      const longest = LENGTHS.filter((h) => fitsToday(h)).pop();
+      if (longest) setHours(longest);
+    }
+  }, [start]);
+
+  const closed = !startTimes.some(startOk);
 
   const price = quote(hours);
   const blocked = user.blocked_until && new Date(user.blocked_until) > new Date();
@@ -94,6 +124,16 @@ export default function ReserveScreen({ navigation }) {
     );
   }
 
+  // Outside opening hours
+  if (closed) {
+    return (
+      <Screen refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={colors.brandBright} colors={[colors.brand]} />}>
+        <ScreenHeader title="Reserve a Locker" />
+        <EmptyState icon="moon-outline" title="Lockers are closed" text={`HelmLock is open from ${OPEN_TEXT}. You can reserve starting ${hourLabel(RULES.openHour - 1)} for a ${hourLabel(RULES.openHour)} drop-off.`} actionTitle="Check again" onAction={reload} />
+      </Screen>
+    );
+  }
+
   const freeCount = data.lockers.filter((l) => l.status === 'available').length;
 
   return (
@@ -107,7 +147,7 @@ export default function ReserveScreen({ navigation }) {
       <SectionTitle>1. Drop-off time</SectionTitle>
       <View style={styles.chips}>
         {STARTS.map((s, i) => (
-          <Chip key={s.label} label={s.label} selected={i === startIndex} onPress={() => setStartIndex(i)} />
+          <Chip key={s.label} label={s.label} selected={i === startIndex} disabled={!startOk(startTimes[i])} onPress={() => setStartIndex(i)} />
         ))}
       </View>
 
@@ -129,7 +169,7 @@ export default function ReserveScreen({ navigation }) {
           <Text style={[styles.time, !fitsToday(hours) && styles.bad]}>{formatTime(end)}</Text>
         </View>
       </Card>
-      <Text style={styles.note}>Store your helmet within {RULES.arriveWindowMinutes} minutes of drop-off, or the reservation expires.</Text>
+      <Text style={styles.note}>Open {OPEN_TEXT}. Store your helmet within {RULES.arriveWindowMinutes} minutes of drop-off, or the reservation expires.</Text>
 
       <SectionTitle right={<Text style={styles.small}>{freeCount} free</Text>}>3. Choose a locker</SectionTitle>
       {data.lockers.length === 0 ? (
@@ -172,7 +212,7 @@ export default function ReserveScreen({ navigation }) {
 
       {error ? <Notice kind="danger" style={styles.error}>{error}</Notice> : null}
 
-      <Button title={lockerId ? 'Reserve Locker ' + data.lockers.find((l) => l.id === lockerId)?.number : 'Choose a locker'} onPress={reserve} loading={saving} disabled={!lockerId || blocked || !fitsToday(hours)} style={styles.reserve} />
+      <Button title={lockerId ? 'Reserve Locker ' + data.lockers.find((l) => l.id === lockerId)?.number : 'Choose a locker'} onPress={reserve} loading={saving} disabled={!lockerId || blocked || !startOk(start) || !fitsToday(hours)} style={styles.reserve} />
       <View style={styles.bottom} />
     </Screen>
   );

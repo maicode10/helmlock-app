@@ -8,7 +8,7 @@ import { colors, font } from '../../theme';
 const SECTIONS = [
   ['1. Who can use HelmLock', [
     'HelmLock is for USTP-CDO students who ride a motorcycle to campus.',
-    'Each student may have only one account, registered with their real student ID.',
+    'Each student may have only one account, registered with their real name, email, and mobile number.',
   ]],
   ['2. Reservations', [
     'You may have only one active reservation at a time.',
@@ -37,12 +37,12 @@ const SECTIONS = [
     'Helmets left past the maximum storage time may be removed by the team and kept safe until claimed.',
   ]],
   ['7. Your data', [
-    'We collect only your name, student ID, email, and your reservation history.',
+    'We collect only your name, email, mobile number, and your reservation history.',
     'This data is used only to run HelmLock, and is not shared with anyone outside the HelmLock team.',
     'We follow the Data Privacy Act of 2012 (Republic Act No. 10173). You can ask the team to correct or delete your data.',
   ]],
   ['8. Misuse', [
-    'Accounts that use fake student IDs, damage the lockers, or try to open other lockers may be blocked.',
+    'Accounts that use fake details, damage the lockers, or try to open other lockers may be blocked.',
   ]],
 ];
 

@@ -50,7 +50,7 @@ export default function AdminReservationsScreen() {
           ListHeaderComponent={
             <View>
               <ScreenHeader title="Reservations" subtitle="Every reservation, newest first." />
-              <SearchBar value={text} onChangeText={setText} placeholder="Name, student ID, or locker" />
+              <SearchBar value={text} onChangeText={setText} placeholder="Name, email, or locker" />
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filters}>
                 {FILTERS.map(([value, label]) => (
                   <Chip key={label} label={label} selected={status === value} onPress={() => setStatus(value)} />
@@ -68,7 +68,7 @@ export default function AdminReservationsScreen() {
               </View>
               <View style={styles.flex}>
                 <Text style={styles.name}>{r.user.name}</Text>
-                <Text style={styles.small}>{r.user.student_id}</Text>
+                <Text style={styles.small}>{r.user.email}</Text>
                 <Text style={styles.small}>
                   {formatDay(r.start_time)} · {formatTime(r.start_time)} – {formatTime(r.end_time)}
                   {r.status === 'completed' ? ` · ${peso(feesFor(r).total)}${feesFor(r).late_fee ? ' (late)' : ''}` : ''}

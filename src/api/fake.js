@@ -32,15 +32,15 @@ function seed() {
   const day0 = new Date();
   day0.setHours(0, 0, 0, 0);
 
-   db.users = [
-    { id: 1, name: 'HelmLock Admin', student_id: null, contact_number: null, email: 'admin@helmlock.test', password: 'password', role: 'admin', no_show_count: 0, blocked_until: null, created_at: iso(now - 40 * 24 * HOUR) },
-    { id: 2, name: 'Juan Dela Cruz', student_id: '2023123456', contact_number: '09171234567', email: 'student@helmlock.test', password: 'password', role: 'student', no_show_count: 1, blocked_until: null, created_at: iso(now - 20 * 24 * HOUR) },
-    { id: 3, name: 'Ana Reyes', student_id: '2022104455', contact_number: '09181234568', email: 'ana.reyes@gmail.com', password: 'password', role: 'student', no_show_count: 0, blocked_until: null, created_at: iso(now - 18 * 24 * HOUR) },
-    { id: 4, name: 'Mark Santos', student_id: '2023117720', contact_number: '09191234569', email: 'mark.santos@gmail.com', password: 'password', role: 'student', no_show_count: 2, blocked_until: null, created_at: iso(now - 15 * 24 * HOUR) },
-    { id: 5, name: 'Liza Cruz', student_id: '2021098813', contact_number: '09201234570', email: 'liza.cruz@gmail.com', password: 'password', role: 'student', no_show_count: 0, blocked_until: iso(now + 9 * HOUR), created_at: iso(now - 12 * 24 * HOUR) },
-    { id: 6, name: 'Paolo Lim', student_id: '2024130021', contact_number: '09211234571', email: 'paolo.lim@gmail.com', password: 'password', role: 'student', no_show_count: 0, blocked_until: null, created_at: iso(now - 6 * 24 * HOUR) },
+  db.users = [
+    { id: 1, name: 'HelmLock Admin', mobile: null, email: 'admin@helmlock.test', password: 'password', role: 'admin', no_show_count: 0, blocked_until: null, created_at: iso(now - 40 * 24 * HOUR) },
+    { id: 2, name: 'Juan Dela Cruz', mobile: '09171234567', email: 'juan.delacruz@gmail.com', password: 'password', role: 'student', no_show_count: 1, blocked_until: null, created_at: iso(now - 20 * 24 * HOUR) },
+    { id: 3, name: 'Ana Reyes', mobile: '09182345678', email: 'ana.reyes@gmail.com', password: 'password', role: 'student', no_show_count: 0, blocked_until: null, created_at: iso(now - 18 * 24 * HOUR) },
+    { id: 4, name: 'Mark Santos', mobile: '09193456789', email: 'mark.santos@gmail.com', password: 'password', role: 'student', no_show_count: 2, blocked_until: null, created_at: iso(now - 15 * 24 * HOUR) },
+    { id: 5, name: 'Liza Cruz', mobile: '09204567890', email: 'liza.cruz@gmail.com', password: 'password', role: 'student', no_show_count: 0, blocked_until: iso(now + 9 * HOUR), created_at: iso(now - 12 * 24 * HOUR) },
+    { id: 6, name: 'Paolo Lim', mobile: '09215678901', email: 'paolo.lim@gmail.com', password: 'password', role: 'student', no_show_count: 0, blocked_until: null, created_at: iso(now - 6 * 24 * HOUR) },
   ];
-  
+
   db.lockers = ['01', '02', '03', '04', '05', '06'].map((number, i) => ({
     id: i + 1,
     number,
@@ -173,7 +173,7 @@ function shapeReservation(r, withUser = false) {
   };
   if (withUser) {
     const u = userById(r.user_id);
-    out.user = u ? { id: u.id, name: u.name, student_id: u.student_id } : { id: null, name: 'Deleted account', student_id: '' };
+    out.user = u ? { id: u.id, name: u.name, email: u.email, mobile: u.mobile } : { id: null, name: 'Deleted account', email: '', mobile: null };
   }
   return out;
 }
@@ -210,6 +210,9 @@ function expireOverdue() {
     });
 }
 
+// 7 -> "7:00 AM", 21 -> "9:00 PM"
+const hourLabel = (h) => `${h % 12 || 12}:00 ${h >= 12 ? 'PM' : 'AM'}`;
+
 function todayAt(time) {
   const [h, m] = String(time).split(':').map(Number);
   const d = new Date();
@@ -217,12 +220,21 @@ function todayAt(time) {
   return d.getTime();
 }
 
-const findLogin = (value) => {
+const findByEmail = (value) => {
   const v = (value || '').trim().toLowerCase();
-  return db.users.find((u) => u.email === v || (u.student_id && u.student_id.toLowerCase() === v)) || null;
+  return db.users.find((u) => u.email === v) || null;
 };
 
 const validEmail = (mail) => /^\S+@\S+\.\S+$/.test(mail);
+
+// Philippine mobile number: 09XXXXXXXXX or +639XXXXXXXXX, saved as 09XXXXXXXXX
+function cleanMobile(value) {
+  const digits = String(value || '').replace(/[\s-]/g, '');
+  if (/^09\d{9}$/.test(digits)) return digits;
+  if (/^\+639\d{9}$/.test(digits)) return '0' + digits.slice(3);
+  if (/^639\d{9}$/.test(digits)) return '0' + digits.slice(2);
+  return null;
+}
 
 // ---------------------------------------------------------------------------
 // Session
@@ -234,30 +246,25 @@ export function setToken(token) {
 // ---------------------------------------------------------------------------
 // Auth
 // ---------------------------------------------------------------------------
-export async function login({ login, password }) {
+export async function login({ email, password }) {
   await wait();
-  if (!login?.trim()) fail('login', 'Please enter your email or student ID.');
+  if (!email?.trim()) fail('email', 'Please enter your email.');
   if (!password) fail('password', 'Please enter your password.');
-  const user = findLogin(login);
-  if (!user || user.password !== password) fail('login', 'Incorrect email/student ID or password.');
+  const user = findByEmail(email);
+  if (!user || user.password !== password) fail('email', 'Incorrect email or password.');
   currentUserId = user.id;
   return { token: 'fake-token-' + user.id, user: publicUser(user) };
 }
 
-export async function register({ name, student_id, contact_number, email, password, password_confirmation, terms }) {
+export async function register({ name, mobile, email, password, password_confirmation, terms }) {
   await wait();
   const errors = {};
-  const studentId = (student_id || '').trim();
-  const contact = (contact_number || '').trim();
+  const phone = cleanMobile(mobile);
   const mail = (email || '').trim().toLowerCase();
 
   if (!name?.trim()) errors.name = ['Please enter your full name.'];
-  if (!contact) errors.contact_number = ['Please enter your contact number.'];
-  else if (!/^09\d{9}$/.test(contact)) errors.contact_number = ['Enter a valid number: 11 digits starting with 09.'];
-  else if (db.users.some((u) => u.contact_number === contact)) errors.contact_number = ['This contact number already has an account.'];
-  if (!studentId) errors.student_id = ['Please enter your student ID.'];
-  else if (!/^[A-Za-z0-9_-]+$/.test(studentId)) errors.student_id = ['Student ID can only have letters, numbers, dashes, and underscores.'];
-  else if (db.users.some((u) => u.student_id === studentId)) errors.student_id = ['This student ID already has an account.'];
+  if (!String(mobile || '').trim()) errors.mobile = ['Please enter your mobile number.'];
+  else if (!phone) errors.mobile = ['Please enter a valid mobile number, like 09171234567.'];
   if (!validEmail(mail)) errors.email = ['Please enter a valid email.'];
   else if (db.users.some((u) => u.email === mail)) errors.email = ['This email is already registered.'];
   if (!password || password.length < 8) errors.password = ['Password must be at least 8 characters.'];
@@ -265,7 +272,7 @@ export async function register({ name, student_id, contact_number, email, passwo
   if (!terms) errors.terms = ['Please agree to the Terms and Rules to continue.'];
   if (Object.keys(errors).length) throw new ApiError('Please check the form.', errors);
 
-  const user = { id: newId(), name: name.trim(), student_id: studentId, contact_number: contact, email: mail, password, role: 'student', no_show_count: 0, blocked_until: null, created_at: iso(Date.now()) };
+  const user = { id: newId(), name: name.trim(), mobile: phone, email: mail, password, role: 'student', no_show_count: 0, blocked_until: null, created_at: iso(Date.now()) };
   db.users.push(user);
   currentUserId = user.id;
   return { token: 'fake-token-' + user.id, user: publicUser(user) };
@@ -283,16 +290,16 @@ export async function getMe() {
 }
 
 // Step 1: email a 6-digit code (in the fake backend the code is always 123456)
-export async function forgotPassword({ login }) {
+export async function forgotPassword({ email }) {
   await wait();
-  if (!login?.trim()) fail('login', 'Please enter your email or student ID.');
+  if (!validEmail((email || '').trim())) fail('email', 'Please enter a valid email.');
   return { message: 'If that account exists, we sent a 6-digit code to its email.' };
 }
 
 // Step 2: set a new password with the code
-export async function resetPassword({ login, code, password, password_confirmation }) {
+export async function resetPassword({ email, code, password, password_confirmation }) {
   await wait();
-  const user = findLogin(login);
+  const user = findByEmail(email);
   if (code !== '123456' || !user) fail('code', 'That code is wrong or has expired.');
   if (!password || password.length < 8) fail('password', 'Password must be at least 8 characters.');
   if (password !== password_confirmation) fail('password_confirmation', "Passwords don't match.");
@@ -303,15 +310,20 @@ export async function resetPassword({ login, code, password, password_confirmati
 // ---------------------------------------------------------------------------
 // Profile (students and admins)
 // ---------------------------------------------------------------------------
-export async function updateProfile({ name, email }) {
+export async function updateProfile({ name, email, mobile }) {
   await wait();
   const user = me();
   const mail = (email || '').trim().toLowerCase();
+  const typed = String(mobile || '').trim();
+  const phone = cleanMobile(typed);
   if (!name?.trim()) fail('name', 'Please enter your full name.');
   if (!validEmail(mail)) fail('email', 'Please enter a valid email.');
   if (db.users.some((u) => u.email === mail && u.id !== user.id)) fail('email', 'This email is already used by another account.');
+  if (!typed && user.role === 'student') fail('mobile', 'Please enter your mobile number.');
+  if (typed && !phone) fail('mobile', 'Please enter a valid mobile number, like 09171234567.');
   user.name = name.trim();
   user.email = mail;
+  user.mobile = phone;
   return { message: 'Your details were saved.', user: publicUser(user) };
 }
 
@@ -366,6 +378,7 @@ export async function createReservation({ locker_id, start_time, end_time }) {
   if (start > Date.now() + RULES.maxAdvanceMinutes * MIN) fail('start_time', `You can only reserve up to ${RULES.maxAdvanceMinutes} minutes ahead.`);
   if (end < start + 15 * MIN) fail('end_time', 'Retrieval time must be at least 15 minutes after drop-off.');
   if (end > start + RULES.maxStorageHours * HOUR) fail('end_time', `You can store your helmet for up to ${RULES.maxStorageHours} hours.`);
+  if (start < todayAt(`${RULES.openHour}:00`) || end > todayAt(`${RULES.closeHour}:00`)) fail('start_time', `Lockers are open from ${hourLabel(RULES.openHour)} to ${hourLabel(RULES.closeHour)} only.`);
 
   const locker = lockerById(locker_id);
   if (!locker || locker.status !== 'available') fail('locker_id', 'That locker was just taken. Please choose another one.');
@@ -447,54 +460,6 @@ export async function regenerateOutQr() {
   db.qrCodes.push({ id: newId(), reservation_id: active.id, type: 'out', token: randomToken(), used_at: null, expires_at: null });
   addLog('qr_regenerated', active, 'New OUT QR created');
   return { message: 'New OUT QR created. Your old one no longer works.', out: shapeQr(qrOf(active, 'out')) };
-}
-
-// TESTING ONLY: pretend the locker scanned your QR (like the website's "Simulate scan" buttons)
-export async function simulateScan(type) {
-  await wait(500);
-  expireOverdue();
-  const user = me();
-  const active = activeOf(user.id);
-  if (!active) return { ok: false, action: null, message: 'You have no active reservation.', lcd: ['No reservation', 'Reserve first'] };
-
-  const qr = qrOf(active, type);
-  const locker = lockerOf(active);
-
-  if (type === 'in') {
-    if (active.status !== 'reserved' || !shapeQr(qr)?.usable) return { ok: false, action: null, message: 'QR already used or expired', lcd: ['QR used/expired', 'Check app'] };
-    qr.used_at = iso(Date.now());
-    active.status = 'stored';
-    active.stored_at = iso(Date.now());
-    locker.status = 'occupied';
-    addLog('stored', active, 'Helmet stored', RULES.dropOffFee);
-    return { ok: true, action: 'store', message: 'Door open. Store your helmet.', lcd: ['Door open', 'Store helmet'], locker: locker.number };
-  }
-
-  if (active.status !== 'stored') return { ok: false, action: null, message: 'Store your helmet first', lcd: ['Store first', 'Use IN QR'] };
-  if (!shapeQr(qr)?.usable) return { ok: false, action: null, message: 'QR already used or expired', lcd: ['QR used/expired', 'Check app'] };
-
-  // The locker asks for the retrieval fee (hours reserved + any late hours), the student inserts the coins, then the door opens
-  const fees = feesFor(active);
-  qr.used_at = iso(Date.now());
-  active.status = 'completed';
-  active.retrieved_at = iso(Date.now());
-  locker.status = 'available';
-  addLog('retrieved', active, fees.late_fee ? `Helmet retrieved (late ${fees.late_hours} hr)` : 'Helmet retrieved', fees.due_at_retrieval);
-  return { ok: true, action: 'retrieve', paid: fees.due_at_retrieval, late_fee: fees.late_fee, message: `Paid ₱${fees.due_at_retrieval}. Door open. Take your helmet.`, lcd: [`Paid P${fees.due_at_retrieval}`, 'Take helmet'], locker: locker.number };
-}
-
-// TESTING ONLY: make the student 45 minutes late (past the free 30 minutes) without waiting
-export async function simulateLate() {
-  await wait(300);
-  const user = me();
-  const active = activeOf(user.id);
-  if (!active || active.status !== 'stored') return { ok: false, message: 'Store your helmet first.' };
-  const length = new Date(active.end_time) - new Date(active.start_time);
-  const end = Date.now() - 45 * MIN;
-  active.end_time = iso(end);
-  active.start_time = iso(end - length);
-  active.stored_at = iso(end - length + 5 * MIN);
-  return { ok: true, message: 'You are now 45 minutes late (testing only). A late fee was added.' };
 }
 
 // ---------------------------------------------------------------------------
@@ -669,7 +634,7 @@ export async function adminReservations({ status = '', q = '' } = {}) {
       if (!search) return true;
       const u = userById(r.user_id);
       const l = lockerOf(r);
-      return (u && (u.name.toLowerCase().includes(search) || (u.student_id || '').includes(search))) || (l && l.number.includes(search));
+      return (u && (u.name.toLowerCase().includes(search) || u.email.includes(search))) || (l && l.number.includes(search));
     })
     .sort((a, b) => new Date(b.start_time) - new Date(a.start_time))
     .slice(0, 100)
@@ -684,7 +649,7 @@ export async function adminStudents({ q = '' } = {}) {
   return {
     students: db.users
       .filter((u) => u.role === 'student')
-      .filter((u) => !search || u.name.toLowerCase().includes(search) || (u.student_id || '').includes(search) || u.email.includes(search))
+      .filter((u) => !search || u.name.toLowerCase().includes(search) || u.email.includes(search) || (u.mobile || '').includes(search))
       .sort((a, b) => a.name.localeCompare(b.name))
       .map((u) => ({
         ...publicUser(u),
@@ -720,7 +685,7 @@ export async function adminReports() {
       .map((r) => {
         const u = userById(r.user_id);
         const l = lockerById(r.locker_id);
-        return { ...r, user: u ? { name: u.name, student_id: u.student_id } : null, locker: l ? l.number : null };
+        return { ...r, user: u ? { name: u.name, email: u.email } : null, locker: l ? l.number : null };
       }),
   };
 }
@@ -754,7 +719,7 @@ export async function adminAddAdmin({ name, email, password, password_confirmati
   if (!password || password.length < 8) errors.password = ['Password must be at least 8 characters.'];
   else if (password !== password_confirmation) errors.password_confirmation = ["Passwords don't match."];
   if (Object.keys(errors).length) throw new ApiError('Please check the form.', errors);
-  const user = { id: newId(), name: name.trim(), student_id: null, email: mail, password, role: 'admin', no_show_count: 0, blocked_until: null, created_at: iso(Date.now()) };
+  const user = { id: newId(), name: name.trim(), mobile: null, email: mail, password, role: 'admin', no_show_count: 0, blocked_until: null, created_at: iso(Date.now()) };
   db.users.push(user);
   return { message: `${user.name} was added as an admin.` };
 }
@@ -834,7 +799,7 @@ export async function adminExport({ type, from, to }) {
       return [ymd(new Date(g.created_at)), hm(g.created_at), x.action.replace(/_/g, ' '), x.locker || '', x.user || '', x.admin || '', x.details || '', g.amount];
     });
   } else if (type === 'reservations') {
-    headers = ['Reservation ID', 'Student', 'Student ID', 'Locker', 'Date', 'Drop-off', 'Retrieve by', 'Stored at', 'Retrieved at', 'Hours', 'Late fee (PHP)', 'Total paid (PHP)', 'Status'];
+    headers = ['Reservation ID', 'Student', 'Email', 'Locker', 'Date', 'Drop-off', 'Retrieve by', 'Stored at', 'Retrieved at', 'Hours', 'Late fee (PHP)', 'Total paid (PHP)', 'Status'];
     rows = db.reservations
       .filter((r) => inRange(r.start_time))
       .sort((a, b) => new Date(a.start_time) - new Date(b.start_time))
@@ -842,13 +807,13 @@ export async function adminExport({ type, from, to }) {
         const u = userById(r.user_id);
         const f = feesFor(r);
         const paid = r.status === 'completed' ? f.total : r.status === 'stored' ? f.drop_off : 0;
-        return [r.id, u?.name || 'Deleted account', u?.student_id || '', lockerOf(r)?.number || '', ymd(new Date(r.start_time)), hm(r.start_time), hm(r.end_time), hm(r.stored_at), hm(r.retrieved_at), f.hours, r.status === 'completed' ? f.late_fee : 0, paid, r.status];
+        return [r.id, u?.name || 'Deleted account', u?.email || '', lockerOf(r)?.number || '', ymd(new Date(r.start_time)), hm(r.start_time), hm(r.end_time), hm(r.stored_at), hm(r.retrieved_at), f.hours, r.status === 'completed' ? f.late_fee : 0, paid, r.status];
       });
   } else if (type === 'students') {
-    headers = ['Name', 'Student ID', 'Email', 'Registered', 'Total reservations', 'Completed', 'No-shows', 'Current strikes', 'Blocked until'];
+    headers = ['Name', 'Email', 'Mobile number', 'Registered', 'Total reservations', 'Completed', 'No-shows', 'Current strikes', 'Blocked until'];
     rows = db.users
       .filter((u) => u.role === 'student')
-      .map((u) => [u.name, u.student_id, u.email, ymd(new Date(u.created_at)), db.reservations.filter((r) => r.user_id === u.id).length, db.reservations.filter((r) => r.user_id === u.id && r.status === 'completed').length, db.reservations.filter((r) => r.user_id === u.id && r.status === 'expired').length, u.no_show_count, isBlocked(u) ? `${ymd(new Date(u.blocked_until))} ${hm(u.blocked_until)}` : '']);
+      .map((u) => [u.name, u.email, u.mobile || '', ymd(new Date(u.created_at)), db.reservations.filter((r) => r.user_id === u.id).length, db.reservations.filter((r) => r.user_id === u.id && r.status === 'completed').length, db.reservations.filter((r) => r.user_id === u.id && r.status === 'expired').length, u.no_show_count, isBlocked(u) ? `${ymd(new Date(u.blocked_until))} ${hm(u.blocked_until)}` : '']);
   } else {
     fail('type', 'Please choose a file to export.');
   }

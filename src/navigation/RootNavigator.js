@@ -19,7 +19,6 @@ import ProfileScreen from '../screens/shared/ProfileScreen';
 // Students
 import StudentTabs from './StudentTabs';
 import ReservationDetailScreen from '../screens/student/ReservationDetailScreen';
-import ScanResultScreen from '../screens/student/ScanResultScreen';
 import ReportScreen from '../screens/student/ReportScreen';
 
 // Admins
@@ -70,7 +69,6 @@ export default function RootNavigator() {
         <>
           <Stack.Screen name="StudentTabs" component={StudentTabs} />
           <Stack.Screen name="ReservationDetail" component={ReservationDetailScreen} />
-          <Stack.Screen name="ScanResult" component={ScanResultScreen} options={{ animation: 'fade_from_bottom', gestureEnabled: false }} />
           <Stack.Screen name="Report" component={ReportScreen} />
           <Stack.Screen name="Profile" component={ProfileScreen} />
           <Stack.Screen name="Faq" component={FaqScreen} />

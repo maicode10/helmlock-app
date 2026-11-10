@@ -13,7 +13,7 @@ import EmptyState from '../../components/EmptyState';
 import ConfirmDialog from '../../components/ConfirmDialog';
 import useLoad from '../../hooks/useLoad';
 import api from '../../api';
-import { DEMO_TOOLS, RULES } from '../../config';
+import { RULES } from '../../config';
 import { formatTime, fromNow } from '../../utils/format';
 import { feesFor, peso } from '../../utils/pricing';
 import { colors, radius } from '../../theme';
@@ -39,25 +39,6 @@ export default function MyQrScreen({ navigation }) {
       setMessage(e.message);
     }
     setConfirm(false);
-    setBusy('');
-  }
-
-  // Testing only: pretend to be the locker
-  async function demo(kind) {
-    setBusy(kind);
-    try {
-      let result;
-      if (kind === 'late') {
-        result = await api.simulateLate();
-        setMessage(result.message);
-        reload();
-      } else {
-        result = await api.simulateScan(kind);
-        navigation.navigate('ScanResult', { result });
-      }
-    } catch (e) {
-      setMessage(e.message);
-    }
     setBusy('');
   }
 
@@ -113,22 +94,6 @@ export default function MyQrScreen({ navigation }) {
 
           <Text style={styles.tip}>Tip: turn your screen brightness up and hold your phone about a hand away from the scanner.</Text>
 
-          {DEMO_TOOLS ? (
-            <View style={styles.demo}>
-              <Text style={styles.demoTitle}>Testing only</Text>
-              <Text style={styles.demoText}>Pretend to be the locker, until the real ESP32 is connected.</Text>
-              <View style={styles.demoButtons}>
-                {r.status === 'reserved' ? (
-                  <Button title="Scan IN QR at the locker" variant="secondary" icon="scan-outline" onPress={() => demo('in')} loading={busy === 'in'} />
-                ) : (
-                  <>
-                    <Button title="Scan OUT QR at the locker" variant="secondary" icon="scan-outline" onPress={() => demo('out')} loading={busy === 'out'} />
-                    {!r.is_late ? <Button title="Make me 45 minutes late" variant="secondary" icon="timer-outline" onPress={() => demo('late')} loading={busy === 'late'} /> : null}
-                  </>
-                )}
-              </View>
-            </View>
-          ) : null}
           <View style={styles.bottom} />
         </>
       )}
@@ -152,9 +117,5 @@ const styles = StyleSheet.create({
   gap: { marginTop: 14 },
   gapSmall: { marginTop: 8 },
   tip: { marginTop: 14, fontSize: 12, lineHeight: 18, color: colors.faint, textAlign: 'center' },
-  demo: { marginTop: 20, padding: 14, borderRadius: radius.lg, borderWidth: 1, borderStyle: 'dashed', borderColor: colors.line },
-  demoTitle: { fontSize: 12, fontWeight: '800', letterSpacing: 0.5, color: colors.amber, textTransform: 'uppercase' },
-  demoText: { marginTop: 2, fontSize: 13, color: colors.muted },
-  demoButtons: { gap: 10, marginTop: 12 },
   bottom: { height: 16 },
 });

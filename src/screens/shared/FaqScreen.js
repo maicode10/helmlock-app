@@ -8,7 +8,7 @@ import { RULES } from '../../config';
 import { colors, radius } from '../../theme';
 
 const STEPS = [
-  ['person-add-outline', 'Create an account', 'Sign up with your name, USTP-CDO student ID, and email. One account per student.'],
+  ['person-add-outline', 'Create an account', 'Sign up with your name, mobile number, and email. One account per person.'],
   ['calendar-outline', 'Reserve a locker', `Pick a free locker, your drop-off time, and how many hours you need it. You can reserve up to ${RULES.maxAdvanceMinutes} minutes ahead.`],
   ['qr-code-outline', 'Open your IN QR', 'Go to My QR. Turn your screen brightness up so the scanner reads it easily.'],
   ['cash-outline', 'Store your helmet', `At your locker, insert ₱${RULES.dropOffFee} and scan your IN QR. The door opens. Put your helmet inside and close the door. Do this within ${RULES.arriveWindowMinutes} minutes of your drop-off time.`],
@@ -27,7 +27,7 @@ const FAQS = [
   ["The locker won't open, or I paid and nothing happened.", 'Send a Report a Problem with your locker number. The HelmLock team will check it and can open the locker with the manual key. Coins are not refunded automatically.'],
   ['What if there is a power outage?', 'Your helmet stays locked inside. Send a Report a Problem, and the team will open the locker with the manual key.'],
   ['Can I store other things?', 'No. HelmLock lockers are for helmets only. Do not leave money, gadgets, or valuables inside.'],
-  ['I forgot my password.', 'On the login screen, tap Forgot password? and enter your email or student ID. We will email you a 6-digit code.'],
+  ['I forgot my password.', 'On the login screen, tap Forgot password? and enter your email. We will send you a 6-digit code.'],
 ];
 
 function FaqItem({ question, answer }) {

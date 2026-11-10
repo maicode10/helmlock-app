@@ -85,10 +85,6 @@ export const regenerateOutQr = () => post('/qr/out/regenerate');
 export const getReportLockers = () => get('/reports/lockers');
 export const createReport = (form) => post('/reports', form);
 
-// Testing only (the backend allows these when HELMLOCK_DEMO=true)
-export const simulateScan = (type) => post(`/dev/scan/${type}`);
-export const simulateLate = () => post('/dev/late');
-
 // ---------- Admin ----------
 export const adminDashboard = () => get('/admin/dashboard');
 export const adminLockers = () => get('/admin/lockers');

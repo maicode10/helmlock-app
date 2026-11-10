@@ -1,4 +1,4 @@
-// My Profile: change name/email, change password, help links, log out (students and admins)
+// My Profile: change name, email and mobile number, change password, help links, log out (students and admins)
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Screen from '../../components/Screen';
@@ -19,7 +19,7 @@ export default function ProfileScreen({ navigation }) {
   const { user, setUser, signOut } = useAuth();
   const isAdmin = user.role === 'admin';
 
-  const [details, setDetails] = useState({ name: user.name, email: user.email });
+  const [details, setDetails] = useState({ name: user.name, email: user.email, mobile: user.mobile || '' });
   const [detailErrors, setDetailErrors] = useState({});
   const [detailMsg, setDetailMsg] = useState('');
   const [savingDetails, setSavingDetails] = useState(false);
@@ -38,6 +38,7 @@ export default function ProfileScreen({ navigation }) {
     try {
       const res = await api.updateProfile(details);
       setUser(res.user);
+      setDetails({ name: res.user.name, email: res.user.email, mobile: res.user.mobile || '' }); // show the saved format, like 09171234567
       setDetailMsg(res.message);
     } catch (e) {
       setDetailErrors(e.errors || { name: [e.message] });
@@ -69,7 +70,7 @@ export default function ProfileScreen({ navigation }) {
         </View>
         <View style={styles.flex}>
           <Text style={styles.name}>{user.name}</Text>
-          <Text style={styles.sub}>{isAdmin ? user.email : `Student ID ${user.student_id}`}</Text>
+          <Text style={styles.sub}>{user.email}</Text>
         </View>
         {isAdmin ? <StatusPill status="admin" /> : null}
       </View>
@@ -79,7 +80,8 @@ export default function ProfileScreen({ navigation }) {
         <Flash message={detailMsg} />
         <TextField label="Full Name" icon="person-outline" value={details.name} onChangeText={(v) => setDetails({ ...details, name: v })} error={detailErrors.name?.[0]} autoCapitalize="words" />
         <TextField label="Email" icon="mail-outline" value={details.email} onChangeText={(v) => setDetails({ ...details, email: v })} error={detailErrors.email?.[0]} keyboardType="email-address" />
-        {!isAdmin ? <Text style={styles.note}>Your student ID can't be changed. Contact the HelmLock team if it's wrong.</Text> : null}
+        <TextField label="Mobile Number" icon="call-outline" placeholder="Ex. 09171234567" value={details.mobile} onChangeText={(v) => setDetails({ ...details, mobile: v })} error={detailErrors.mobile?.[0]} keyboardType="phone-pad" maxLength={13} />
+        <Text style={styles.note}>{isAdmin ? 'Optional for admins.' : 'We send your retrieval reminder to this number by SMS.'}</Text>
         <Button title="Save details" onPress={saveDetails} loading={savingDetails} />
       </Card>
 
@@ -100,7 +102,7 @@ export default function ProfileScreen({ navigation }) {
       </Card>
       <Text style={styles.version}>HelmLock v1.0 · USTP-CDO</Text>
 
-      <ConfirmDialog visible={confirmLogout} title="Log out?" message="You'll need your email or student ID and password to log in again." confirmText="Log out" onConfirm={signOut} onCancel={() => setConfirmLogout(false)} />
+      <ConfirmDialog visible={confirmLogout} title="Log out?" message="You'll need your email and password to log in again." confirmText="Log out" onConfirm={signOut} onCancel={() => setConfirmLogout(false)} />
     </Screen>
   );
 }
