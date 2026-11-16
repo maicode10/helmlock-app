@@ -15,7 +15,6 @@ export const RULES = {
   dropOffFee: 5, // pesos to open the locker and store the helmet (IN)
   hourlyFee: 5, // pesos per reserved hour, paid at retrieval (OUT)
   lateFeePerHour: 5, // extra pesos per hour past the retrieval time
-  lateGraceMinutes: 15, // being late up to this long is free
   arriveWindowMinutes: 15, // reservation expires if the helmet isn't stored this long after drop-off
   maxAdvanceMinutes: 60, // how far ahead a reservation can start
   maxStorageHours: 12, // longest storage time

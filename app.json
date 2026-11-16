@@ -4,26 +4,33 @@
     "slug": "helmlock",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/helmlock-launcher.png",
     "userInterfaceStyle": "dark",
     "ios": {
       "supportsTablet": true
     },
-    "android": {
-      "adaptiveIcon": {
-        "backgroundColor": "#dc2626",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
-      }
-    },
+  "android": {
+    "package": "com.maicode.helmlock",
+    "adaptiveIcon": {
+      "backgroundColor": "#dc2626",
+      "foregroundImage": "./assets/helmlock-launcher-foreground.png",
+      "backgroundImage": "./assets/helmlock-launcher-background.png",
+      "monochromeImage": "./assets/helmlock-launcher-mono.png"
+    }
+  },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "backgroundColor": "#0f0f10",
     "plugins": [
       "expo-secure-store",
-      "expo-status-bar"
-    ]
+      "expo-status-bar",
+      "expo-font"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "8a743f5a-d6c8-4868-b2bc-a5961fe65c08"
+      }
+    }
   }
 }
