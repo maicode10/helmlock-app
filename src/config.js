@@ -2,11 +2,11 @@
 
 // true  = use the fake backend inside the app (no server needed)
 // false = use the real Laravel backend at API_URL
-export const USE_FAKE_API = true;
+export const USE_FAKE_API = false;
 
 // Your friend's Laravel backend.
 // Same WiFi: http://YOUR-LAPTOP-IP:8000   Online: https://your-app.up.railway.app
-export const API_URL = 'http://192.168.1.10:8000';
+export const API_URL = 'https://helmlock-server.onrender.com';
 
 // Locker rules (same numbers as config/helmlock.php in Laravel)
 export const RULES = {
@@ -20,4 +20,5 @@ export const RULES = {
   maxStorageHours: 12, // longest storage time
   noShowLimit: 3, // missed reservations before a block
   blockHours: 24, // how long the block lasts
+  lateGraceMinutes: 15, // being late up to this long is free
 };

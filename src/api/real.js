@@ -14,7 +14,7 @@ export function setToken(value) {
 // One request to the backend, with the login token and a 15-second time limit
 async function request(method, path, body) {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 15000);
+  const timer = setTimeout(() => controller.abort(), 60000);
 
   let res;
   try {
