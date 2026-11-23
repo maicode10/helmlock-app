@@ -1,4 +1,4 @@
-// HelmLock pricing (same rules as the Laravel backend and the ESP32)
+// HelmLock pricing (same rules as the HelmLock server and the ESP32)
 //   Drop-off (IN):  ₱5, always
 //   Retrieval (OUT): ₱5 for every hour reserved
 //   Late:           +₱5 for every hour past the retrieval time (the first 15 minutes late are free)
@@ -41,6 +41,12 @@ export function lateFeeFor(end, at = Date.now()) {
   return Math.min(hours * LATE.perHour, LATE.max);
 }
 
+// Are the lockers open right now? (RULES.openHour up to RULES.closeHour)
+export function isOpenNow(at = Date.now()) {
+  const d = new Date(ms(at));
+  const hours = d.getHours() + d.getMinutes() / 60;
+  return hours >= RULES.openHour && hours < RULES.closeHour;
+}
 // Price before reserving
 export function quote(hours) {
   const retrieval = hours * RULES.hourlyFee;

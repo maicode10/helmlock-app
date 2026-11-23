@@ -8,7 +8,7 @@ export const USE_FAKE_API = false;
 // Running it on your own laptop instead: http://YOUR-LAPTOP-IP:3000 (installed APKs block plain http)
 export const API_URL = 'https://helmlock-server.onrender.com';
 
-// Locker rules (same numbers as config/helmlock.php in Laravel)
+// Locker rules. Keep these the same as the server settings
 export const RULES = {
   openHour: 7, // lockers open at 7:00 AM
   closeHour: 21, // lockers close at 9:00 PM (helmets must be retrieved by then)

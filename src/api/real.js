@@ -102,3 +102,4 @@ export const adminTeam = () => get('/admin/team');
 export const adminAddAdmin = (form) => post('/admin/team', form);
 export const adminRemoveAdmin = (id) => del(`/admin/team/${id}`);
 export const adminExport = (params) => get('/admin/export' + query(params));
+export const adminBlockStudent = (id, hours = null) => post(`/admin/students/${id}/block`, { hours });
