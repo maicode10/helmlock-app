@@ -1,11 +1,11 @@
 // HelmLock app settings.
 
 // true  = use the fake backend inside the app (no server needed)
-// false = use the real Laravel backend at API_URL
+// false = use the real HelmLock server at API_URL
 export const USE_FAKE_API = false;
 
-// Your friend's Laravel backend.
-// Same WiFi: http://YOUR-LAPTOP-IP:8000   Online: https://your-app.up.railway.app
+// The HelmLock server (Node.js + Express, hosted on Render). Use https://
+// Running it on your own laptop instead: http://YOUR-LAPTOP-IP:3000 (installed APKs block plain http)
 export const API_URL = 'https://helmlock-server.onrender.com';
 
 // Locker rules (same numbers as config/helmlock.php in Laravel)
@@ -20,5 +20,6 @@ export const RULES = {
   maxStorageHours: 12, // longest storage time
   noShowLimit: 3, // missed reservations before a block
   blockHours: 24, // how long the block lasts
+  maxLateFee: 50, // the late fee never goes above this
   lateGraceMinutes: 15, // being late up to this long is free
 };

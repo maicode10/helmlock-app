@@ -1,5 +1,5 @@
 // Fig. 5 and 6: the IN (storage) and OUT (retrieval) QR codes
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { RefreshControl, StyleSheet, Text, View } from 'react-native';
 import Screen from '../../components/Screen';
 import ScreenHeader from '../../components/ScreenHeader';
@@ -15,9 +15,10 @@ import useLoad from '../../hooks/useLoad';
 import api from '../../api';
 import { RULES } from '../../config';
 import { formatTime, fromNow } from '../../utils/format';
-import { feesFor, peso } from '../../utils/pricing';
+import { feesFor, isOpenNow, peso } from '../../utils/pricing';
 import { colors, radius } from '../../theme';
 
+const hourLabel = (h) => `${h % 12 || 12}:00 ${h >= 12 ? 'PM' : 'AM'}`;
 export default function MyQrScreen({ navigation }) {
   const [confirm, setConfirm] = useState(false);
   const [busy, setBusy] = useState('');
@@ -27,6 +28,16 @@ export default function MyQrScreen({ navigation }) {
   const r = data?.reservation;
   const showing = r?.status === 'reserved' ? 'in' : 'out';
   const qr = data ? data[showing] : null;
+    // After closing time the cabinet will not open, so do not show the OUT QR until it reopens
+  const closedNow = showing === 'out' && !isOpenNow();
+
+  // While the IN QR is showing, check every 5 seconds so the OUT QR appears by itself
+  // as soon as the cabinet has stored the helmet (no need to pull to refresh).
+  useEffect(() => {
+    if (r?.status !== 'reserved') return undefined;
+    const timer = setInterval(reload, 5000);
+    return () => clearInterval(timer);
+  }, [r?.status]);
   const due = r ? (showing === 'in' ? RULES.dropOffFee : feesFor(r).due_at_retrieval) : 0;
 
   async function regenerate() {
@@ -69,9 +80,15 @@ export default function MyQrScreen({ navigation }) {
               ) : null}
             </View>
 
-            <View style={styles.qr}>
-              <QrCard value={qr?.token} label={showing === 'in' ? 'IN · STORE HELMET' : 'OUT · GET HELMET'} used={!qr?.usable} />
-            </View>
+            {closedNow ? (
+              <Notice kind="info" style={styles.gap}>
+                Lockers are closed now. Your helmet is safe inside. Your OUT QR will show again when the lockers open at {hourLabel(RULES.openHour)}. You will not be charged a late fee while the lockers are closed.
+              </Notice>
+            ) : (
+              <View style={styles.qr}>
+                <QrCard value={qr?.token} label={showing === 'in' ? 'IN · STORE HELMET' : 'OUT · GET HELMET'} used={!qr?.usable} />
+              </View>
+            )}
 
             {showing === 'in' ? (
               <Text style={styles.deadline}>
