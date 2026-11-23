@@ -1,0 +1,30 @@
+BLOCK A STUDENT - add ONE function to each API file
+===================================================
+(Don't replace these files. Just paste at the very BOTTOM of each one.)
+
+1) src/api/fake.js  -> paste at the bottom:
+
+// Admin: block a student. hours = number of hours, or null = until an admin unblocks them
+export async function adminBlockStudent(id, hours = null) {
+  await wait();
+  const a = admin();
+  const u = userById(Number(id));
+  if (!u) throw new ApiError('Student not found.', {}, 404);
+  u.blocked_until = hours ? iso(Date.now() + hours * HOUR) : '2099-12-31T23:59:59.000Z';
+  addLog('blocked', null, `${u.name} blocked by admin`, 0, null, { admin_id: a.id });
+  return { message: hours ? `${u.name} is blocked.` : `${u.name} is blocked until you unblock them.`, blocked_until: u.blocked_until };
+}
+
+
+2) src/api/real.js  -> paste at the bottom
+   (write it the same way as the adminUnblockStudent line already in that file):
+
+export const adminBlockStudent = (id, hours = null) => post(`/admin/students/${id}/block`, { hours });
+
+
+3) For your backend friend (the server must have this route):
+
+POST /admin/students/:id/block     body: { "hours": 24 }   (or { "hours": null } = until unblocked)
+  -> set blocked_until = now + hours   (null hours -> 2099-12-31 23:59:59)
+  -> reply { "message": "...", "blocked_until": "<date>" }
+The reserve route must already refuse students whose blocked_until is in the future.

@@ -5,6 +5,7 @@ import Screen from '../../components/Screen';
 import ScreenHeader from '../../components/ScreenHeader';
 import SectionTitle from '../../components/SectionTitle';
 import { RULES } from '../../config';
+import { LATE } from '../../utils/lateRules';
 import { colors, radius } from '../../theme';
 
 const STEPS = [
@@ -17,7 +18,7 @@ const STEPS = [
 
 const FAQS = [
   ['How much does it cost?', `₱${RULES.dropOffFee} when you store your helmet, then ₱${RULES.hourlyFee} for every hour you reserved when you get it back. For example, 3 hours costs ₱${RULES.dropOffFee} + ₱${3 * RULES.hourlyFee} = ₱${RULES.dropOffFee + 3 * RULES.hourlyFee}.`],
-  ["What if I'm late getting my helmet?", `The first ${RULES.lateGraceMinutes} minutes late are free. After that, ₱${RULES.lateFeePerHour} is added for every late hour. The locker screen and the app show the total to insert before you scan your OUT QR.`],
+  ["What if I'm late getting my helmet?", `The first ${LATE.graceMinutes} minutes late are free. After that, ₱${LATE.perHour} is added for every late hour, up to ₱${LATE.max}. If you leave your helmet overnight, the late fee is a flat ₱${LATE.max}. The locker screen and the app show the total to insert before you scan your OUT QR.`],
   ["What if I don't show up?", `If you don't store your helmet within ${RULES.arriveWindowMinutes} minutes of your drop-off time, the reservation expires and counts as missed. After ${RULES.noShowLimit} missed reservations, you can't reserve for ${RULES.blockHours} hours.`],
   ['Can I cancel a reservation?', "Yes, as long as you haven't stored your helmet yet. Open your reservation and tap Cancel. Cancelling doesn't count as missed."],
   ['Can I reserve more than one locker?', 'No. You can have one active reservation at a time, so more students get a locker.'],

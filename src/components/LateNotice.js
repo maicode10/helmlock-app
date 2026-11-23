@@ -1,7 +1,7 @@
 // Warning shown when a stored helmet is past its retrieval time
 import Notice from './Notice';
-import { RULES } from '../config';
 import { feesFor, graceLeft, peso } from '../utils/pricing';
+import { LATE } from '../utils/lateRules';
 
 export default function LateNotice({ reservation: r, style }) {
   if (!r || r.status !== 'stored' || !r.is_late) return null;
@@ -18,7 +18,9 @@ export default function LateNotice({ reservation: r, style }) {
   const f = feesFor(r);
   return (
     <Notice kind="danger" style={style}>
-      You're late, so a {peso(f.late_fee)} late fee was added ({peso(RULES.lateFeePerHour)} per late hour). Pay {peso(f.due_at_retrieval)} at the locker to get your helmet.
+      {f.overnight
+        ? `Your helmet was left overnight, so the ${peso(LATE.max)} overnight fee was added. Pay ${peso(f.due_at_retrieval)} at the locker to get your helmet.`
+        : `You're late, so a ${peso(f.late_fee)} late fee was added (${peso(LATE.perHour)} per late hour, max ${peso(LATE.max)}). Pay ${peso(f.due_at_retrieval)} at the locker to get your helmet.`}
     </Notice>
   );
 }

@@ -3,6 +3,7 @@ import Screen from '../../components/Screen';
 import ScreenHeader from '../../components/ScreenHeader';
 import Card from '../../components/Card';
 import { RULES } from '../../config';
+import { LATE } from '../../utils/lateRules';
 import { colors, font } from '../../theme';
 
 const SECTIONS = [
@@ -18,7 +19,8 @@ const SECTIONS = [
   ]],
   ['3. Fees and coins', [
     `Storing (IN) costs ₱${RULES.dropOffFee}. Retrieving (OUT) costs ₱${RULES.hourlyFee} for every hour reserved. Both are paid by coin at the locker.`,
-    `If you retrieve late, the first ${RULES.lateGraceMinutes} minutes are free. After that, a late fee of ₱${RULES.lateFeePerHour} applies for every late hour.`,
+    `If you retrieve late, the first ${LATE.graceMinutes} minutes are free. After that, a late fee of ₱${LATE.perHour} applies for every late hour, up to ₱${LATE.max}.`,
+    `Helmets left overnight (after closing) pay a flat ₱${LATE.max} late fee. The late fee is never more than ₱${LATE.max}.`,
     'If a QR scan fails after you insert a coin, your coin credit stays active for a short time so you can scan again.',
     'Coins are not refunded automatically. If the locker fails after you paid, send a Report a Problem and the HelmLock team will check it.',
   ]],

@@ -27,6 +27,9 @@ import AdminLockerFormScreen from '../screens/admin/AdminLockerFormScreen';
 import AdminReportsScreen from '../screens/admin/AdminReportsScreen';
 import AdminTeamScreen from '../screens/admin/AdminTeamScreen';
 import AdminExportScreen from '../screens/admin/AdminExportScreen';
+import AdminQrScreen from '../screens/admin/AdminQrScreen';
+import AdminStudentScreen from '../screens/admin/AdminStudentScreen';
+import AdminActivityScreen from '../screens/admin/AdminActivityScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -61,6 +64,9 @@ export default function RootNavigator() {
           <Stack.Screen name="AdminReports" component={AdminReportsScreen} />
           <Stack.Screen name="AdminTeam" component={AdminTeamScreen} />
           <Stack.Screen name="AdminExport" component={AdminExportScreen} />
+          <Stack.Screen name="AdminQr" component={AdminQrScreen} />
+          <Stack.Screen name="AdminStudent" component={AdminStudentScreen} />
+          <Stack.Screen name="AdminActivity" component={AdminActivityScreen} />
           <Stack.Screen name="Profile" component={ProfileScreen} />
           <Stack.Screen name="Faq" component={FaqScreen} />
           <Stack.Screen name="Terms" component={TermsScreen} />

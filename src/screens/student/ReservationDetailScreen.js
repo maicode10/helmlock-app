@@ -17,6 +17,7 @@ import api from '../../api';
 import { RULES } from '../../config';
 import { formatDate, formatTime } from '../../utils/format';
 import { feesFor, peso } from '../../utils/pricing';
+import { LATE } from '../../utils/lateRules';
 import { colors } from '../../theme';
 
 export default function ReservationDetailScreen({ navigation, route }) {
@@ -93,7 +94,7 @@ export default function ReservationDetailScreen({ navigation, route }) {
               <Text style={styles.feeTitle}>{r.status === 'completed' ? 'You paid' : 'Price'}</Text>
               <InfoRow label="Drop-off (IN)" value={peso(f.drop_off)} />
               <InfoRow label={`Retrieval (OUT) · ${f.hours} hr`} value={peso(f.retrieval)} last={!f.late_fee} />
-              {f.late_fee ? <InfoRow label={`Late fee · ${f.late_hours} hr`} value={peso(f.late_fee)} last /> : null}
+              {f.late_fee ? <InfoRow label={f.overnight ? 'Late fee · overnight' : `Late fee · ${f.late_hours} hr`} value={peso(f.late_fee)} last /> : null}
               <View style={styles.feeTotal}>
                 <Text style={styles.feeTotalLabel}>Total</Text>
                 <Text style={styles.feeTotalValue}>{peso(f.total)}</Text>
@@ -119,7 +120,7 @@ export default function ReservationDetailScreen({ navigation, route }) {
           )}
 
           <Text style={styles.fee}>
-            Paid in ₱5 coins at the locker. Late? The first {RULES.lateGraceMinutes} minutes are free, then +{peso(RULES.lateFeePerHour)} per hour.
+            Paid in ₱5 coins at the locker. Late? The first {LATE.graceMinutes} minutes are free, then +{peso(LATE.perHour)} per hour, max {peso(LATE.max)} (overnight: {peso(LATE.max)}).
           </Text>
         </>
       )}

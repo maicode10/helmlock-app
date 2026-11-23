@@ -37,6 +37,7 @@ export default function AdminMoreScreen({ navigation }) {
 
       <SectionTitle>Manage</SectionTitle>
       <Card style={styles.menu}>
+        <ListItem icon="qr-code-outline" title="Admin QR" subtitle="Open any locker without coins" onPress={() => navigation.navigate('AdminQr')} />
         <ListItem icon="flag-outline" title="Problem Reports" subtitle="Messages from students" badge={open || null} onPress={() => navigation.navigate('AdminReports')} />
         <ListItem icon="people-circle-outline" title="Team" subtitle="Admin accounts for each member" onPress={() => navigation.navigate('AdminTeam')} />
         <ListItem icon="download-outline" title="Export Data" subtitle="Daily summary, peak hours, payments" last onPress={() => navigation.navigate('AdminExport')} />

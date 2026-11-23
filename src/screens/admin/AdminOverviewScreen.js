@@ -17,6 +17,7 @@ import { colors } from '../../theme';
 
 const hourLabel = (h) => `${h % 12 || 12} ${h >= 12 ? 'PM' : 'AM'}`;
 const actionLabel = (a) => (a.charAt(0).toUpperCase() + a.slice(1)).replace(/_/g, ' ');
+const RECENT_SHOWN = 5; // only the newest few here; the rest are in "See all"
 
 export default function AdminOverviewScreen({ navigation }) {
   const { user } = useAuth();
@@ -81,11 +82,18 @@ export default function AdminOverviewScreen({ navigation }) {
             )}
           </Card>
 
-          <SectionTitle>Recent activity</SectionTitle>
+          <View style={styles.sectionRow}>
+            <SectionTitle>Recent activity</SectionTitle>
+            {data.recent.length > RECENT_SHOWN ? (
+              <Pressable onPress={() => navigation.navigate('AdminActivity')} hitSlop={8}>
+                <Text style={styles.seeAll}>See all ›</Text>
+              </Pressable>
+            ) : null}
+          </View>
           <Card style={styles.list}>
             {data.recent.length ? (
-              data.recent.map((log, i) => (
-                <View key={log.id} style={[styles.log, i < data.recent.length - 1 && styles.logBorder]}>
+              data.recent.slice(0, RECENT_SHOWN).map((log, i, shown) => (
+                <View key={log.id} style={[styles.log, i < shown.length - 1 && styles.logBorder]}>
                   <View style={styles.logIcon}>
                     <Ionicons name={log.amount ? 'cash-outline' : 'ellipse-outline'} size={14} color={log.amount ? colors.green : colors.faint} />
                   </View>
@@ -130,4 +138,6 @@ const styles = StyleSheet.create({
   money: { color: colors.green, fontWeight: '700' },
   logSub: { marginTop: 2, fontSize: 12, lineHeight: 17, color: colors.muted },
   bottom: { height: 16 },
+  sectionRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  seeAll: { fontSize: 14, fontWeight: '700', color: colors.brandText, marginTop: 8 },
 });
